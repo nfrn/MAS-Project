@@ -8,3 +8,4 @@ Information:
 
 Papers:
 * https://pdfs.semanticscholar.org/1a1f/03618f6ef4b08b2e8f8a3aa2276c6b7580f5.pdf
+* https://www.safaribooksonline.com/library/view/advances-in-artificial/9780123970411/B9780123970411000054/B9780123970411000054.xhtml
