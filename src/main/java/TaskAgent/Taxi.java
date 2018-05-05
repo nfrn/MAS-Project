@@ -20,22 +20,15 @@ import com.google.common.base.Optional;
  *
  * @author Rinde van Lon
  */
-<<<<<<< HEAD
 public class Taxi extends Vehicle{
-=======
-public class Taxi extends Vehicle {
->>>>>>> 1ac087f1b45b03bb5b42dff250b596eb2f6344c1
     private static final double SPEED = 1000d;
     private static final int FUELCAPACITY = 100;
 
     private Optional<Parcel> curr;
     /*Extra*/
     private int current_fuel;
-<<<<<<< HEAD
-    private Taxi_DMAS delegate_ant_mas;
-=======
+
     private Delegate_Ant_MAS delegate_ant_mas;
->>>>>>> 1ac087f1b45b03bb5b42dff250b596eb2f6344c1
 
     public Taxi(Point startPosition, int capacity) {
         super(VehicleDTO.builder()
@@ -45,11 +38,8 @@ public class Taxi extends Vehicle {
                 .build());
         curr = Optional.absent();
         current_fuel = FUELCAPACITY;
-<<<<<<< HEAD
-        delegate_ant_mas = new Taxi_DMAS();
-=======
+
         delegate_ant_mas = new Delegate_Ant_MAS();
->>>>>>> 1ac087f1b45b03bb5b42dff250b596eb2f6344c1
     }
 
     @Override
@@ -91,10 +81,7 @@ public class Taxi extends Vehicle {
                     pm.pickup(this, curr.get(), time);
                 }
             }
-<<<<<<< HEAD
 
-=======
->>>>>>> 1ac087f1b45b03bb5b42dff250b596eb2f6344c1
         }
     }
 }
