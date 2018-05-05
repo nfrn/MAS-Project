@@ -14,6 +14,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import ResourceAgent.Customer;
+import ResourceAgent.Feasibility_Ant;
+import TaskAgent.Exploration_Ant;
+import TaskAgent.Intention_Ant;
 import TaskAgent.Taxi;
 import TaskAgent.TaxiBase;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -32,9 +35,9 @@ import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.geom.MultiAttributeData;
 import com.github.rinde.rinsim.geom.io.DotGraphIO;
 import com.github.rinde.rinsim.geom.io.Filters;
-import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
-import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
+import Ui.View;
+import Ui.renderers.GraphRoadModelRenderer;
+import Ui.renderers.RoadUserRenderer;
 
 import Simulation.TaxiRenderer.Language;
 
@@ -98,9 +101,9 @@ public final class TaxiSimulation {
      * @param testing Indicates whether the method should run in testing mode.
      * @param endTime The time at which simulation should stop.
      * @param graphFile The graph that should be loaded.
-     * @param display The display that should be used to show the ui on.
-     * @param m The monitor that should be used to show the ui on.
-     * @param list A listener that will receive callbacks from the ui.
+     * @param display The display that should be used to show the Ui on.
+     * @param m The monitor that should be used to show the Ui on.
+     * @param list A listener that will receive callbacks from the Ui.
      * @return The simulator instance.
      */
     public static Simulator run(boolean testing, final long endTime,
@@ -125,6 +128,9 @@ public final class TaxiSimulation {
         for (int i = 0; i < NUM_DEPOTS; i++) {
             simulator.register(new TaxiBase(roadModel.getRandomPosition(rng),
                     DEPOT_CAPACITY));
+            simulator.register(new Intention_Ant(roadModel.getRandomPosition(rng)));
+            simulator.register(new Exploration_Ant(roadModel.getRandomPosition(rng)));
+            simulator.register(new Feasibility_Ant(roadModel.getRandomPosition(rng)));
         }
         for (int i = 0; i < NUM_TAXIS; i++) {
             simulator.register(new Taxi(roadModel.getRandomPosition(rng),
@@ -177,7 +183,13 @@ public final class TaxiSimulation {
                         .withImageAssociation(
                                 Taxi.class, "/graphics/flat/taxi-32.png")
                         .withImageAssociation(
-                                Customer.class, "/graphics/flat/person-red-32.png"))
+                                Customer.class, "/graphics/flat/person-red-32.png")
+                        .withImageAssociation(
+                                Feasibility_Ant.class, "/graphics/flat/Ants/exploration.png")
+                        .withImageAssociation(
+                                Exploration_Ant.class, "/graphics/flat/Ants/feasibility.png")
+                        .withImageAssociation(
+                                Intention_Ant.class, "/graphics/flat/Ants/intention.png"))
                 .with(TaxiRenderer.builder(Language.ENGLISH))
                 .withTitleAppendix("TaskAgent example");
 

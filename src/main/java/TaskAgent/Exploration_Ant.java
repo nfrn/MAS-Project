@@ -7,8 +7,8 @@ import java.util.ArrayList;
 
 public class Exploration_Ant extends Ant {
 
-    public Exploration_Ant(){
-        super(new Point(10,10), new ArrayList<Point>(),4);
+    public Exploration_Ant(Point startpostion){
+        super(startpostion, new ArrayList<Point>(),4);
     }
 
     public void smell(int p){

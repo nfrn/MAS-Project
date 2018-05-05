@@ -7,9 +7,8 @@ import java.util.ArrayList;
 
 public class Intention_Ant extends Ant {
 
-    public Intention_Ant() {
-
-        super(new Point(10, 10), new ArrayList<Point>(), 4);
+    public Intention_Ant(Point startpostion){
+        super(startpostion, new ArrayList<Point>(), 4);
 
     }
 
