@@ -1,6 +1,7 @@
 package ResourceAgent;
 
 import TaskAgent.Intention_Ant;
+import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
@@ -15,10 +16,17 @@ public class Customer extends Parcel {
     int current_pheremone;
     ArrayList<Intention_Ant> intention_ants;
 
-    public Customer(ParcelDTO dto) {
+    Feasibility_DMAS dmas;
+
+    public Customer(ParcelDTO dto, RoadModel rm, Simulator simulator, boolean mas_flag) {
         super(dto);
         current_pheremone = 0;
         intention_ants = new ArrayList<Intention_Ant>();
+
+        if(mas_flag) {
+            this.dmas = new Feasibility_DMAS(this, rm, simulator);
+            simulator.register(this.dmas);
+        }
     }
 
     @Override

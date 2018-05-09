@@ -53,8 +53,8 @@ import Simulation.TaxiRenderer.Language;
 public final class TaxiSimulation {
 
     private static final int NUM_DEPOTS = 1;
-    private static final int NUM_TAXIS = 20;
-    private static final int NUM_CUSTOMERS = 30;
+    private static final int NUM_TAXIS = 2;
+    private static final int NUM_CUSTOMERS = 20;
 
     // time in ms
     private static final long SERVICE_DURATION = 60000;
@@ -136,13 +136,15 @@ public final class TaxiSimulation {
             simulator.register(new Taxi(roadModel.getRandomPosition(rng),
                     TAXI_CAPACITY));
         }
+        boolean create_MAS = true;
         for (int i = 0; i < NUM_CUSTOMERS; i++) {
+            if(i != 0) create_MAS = false;
             simulator.register(new Customer(
                     Parcel.builder(roadModel.getRandomPosition(rng),
                             roadModel.getRandomPosition(rng))
                             .serviceDuration(SERVICE_DURATION)
                             .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
-                            .buildDTO()));
+                            .buildDTO(), roadModel, simulator, create_MAS));
         }
 
         simulator.addTickListener(new TickListener() {
@@ -157,7 +159,7 @@ public final class TaxiSimulation {
                                             roadModel.getRandomPosition(rng))
                                     .serviceDuration(SERVICE_DURATION)
                                     .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
-                                    .buildDTO()));
+                                    .buildDTO(), roadModel, simulator, false));
                 }
             }
 
