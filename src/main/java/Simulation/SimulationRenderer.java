@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
  * @author Rinde van Lon
  *
  */
-public class TaxiRenderer extends AbstractCanvasRenderer {
+public class SimulationRenderer extends AbstractCanvasRenderer {
 
     static final int ROUND_RECT_ARC_HEIGHT = 5;
     static final int X_OFFSET = -5;
@@ -51,7 +51,7 @@ public class TaxiRenderer extends AbstractCanvasRenderer {
     final PDPModel pdpModel;
     final Language lang;
 
-    TaxiRenderer(RoadModel r, PDPModel p, Language l) {
+    SimulationRenderer(RoadModel r, PDPModel p, Language l) {
         lang = l;
         roadModel = r;
         pdpModel = p;
@@ -110,7 +110,7 @@ public class TaxiRenderer extends AbstractCanvasRenderer {
     }
 
     static Builder builder(Language l) {
-        return new AutoValue_TaxiRenderer_Builder(l);
+        return new AutoValue_SimulationRenderer_Builder(l);
     }
 
     // This builder is using Google's AutoValue for creating a value object, see
@@ -121,7 +121,7 @@ public class TaxiRenderer extends AbstractCanvasRenderer {
     // equals() and hashCode().
     @AutoValue
     abstract static class Builder extends
-            AbstractModelBuilder<TaxiRenderer, Void> {
+            AbstractModelBuilder<SimulationRenderer, Void> {
 
         private static final long serialVersionUID = -1772420262312399129L;
 
@@ -132,10 +132,10 @@ public class TaxiRenderer extends AbstractCanvasRenderer {
         abstract Language language();
 
         @Override
-        public TaxiRenderer build(DependencyProvider dependencyProvider) {
+        public SimulationRenderer build(DependencyProvider dependencyProvider) {
             final RoadModel rm = dependencyProvider.get(RoadModel.class);
             final PDPModel pm = dependencyProvider.get(PDPModel.class);
-            return new TaxiRenderer(rm, pm, language());
+            return new SimulationRenderer(rm, pm, language());
         }
     }
 }

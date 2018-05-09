@@ -14,9 +14,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import ResourceAgent.Customer;
-import ResourceAgent.Feasibility_Ant;
-import TaskAgent.Exploration_Ant;
-import TaskAgent.Intention_Ant;
+import Ants.Feasibility.Feasibility_Ant;
+import Ants.Exploration.Exploration_Ant;
+import Ants.Intention.Intention_Ant;
 import TaskAgent.Taxi;
 import TaskAgent.TaxiBase;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -39,7 +39,7 @@ import Ui.View;
 import Ui.renderers.GraphRoadModelRenderer;
 import Ui.renderers.RoadUserRenderer;
 
-import Simulation.TaxiRenderer.Language;
+import Simulation.SimulationRenderer.Language;
 
 
 /**
@@ -50,7 +50,7 @@ import Simulation.TaxiRenderer.Language;
  * -XstartOnFirstThread as a VM argument.
  * @author Rinde van Lon
  */
-public final class TaxiSimulation {
+public final class Simulation {
 
     private static final int NUM_DEPOTS = 1;
     private static final int NUM_TAXIS = 2;
@@ -72,10 +72,10 @@ public final class TaxiSimulation {
     private static final long TEST_STOP_TIME = 20 * 60 * 1000;
     private static final int TEST_SPEED_UP = 64;
 
-    private TaxiSimulation() {}
+    private Simulation() {}
 
     /**
-     * Starts the {@link TaxiSimulation}.
+     * Starts the {@link Simulation.Simulation}.
      * @param args The first option may optionally indicate the end time of the
      *          simulation.
      */
@@ -128,9 +128,6 @@ public final class TaxiSimulation {
         for (int i = 0; i < NUM_DEPOTS; i++) {
             simulator.register(new TaxiBase(roadModel.getRandomPosition(rng),
                     DEPOT_CAPACITY));
-            simulator.register(new Intention_Ant(roadModel.getRandomPosition(rng)));
-            simulator.register(new Exploration_Ant(roadModel.getRandomPosition(rng)));
-            simulator.register(new Feasibility_Ant(roadModel.getRandomPosition(rng)));
         }
         for (int i = 0; i < NUM_TAXIS; i++) {
             simulator.register(new Taxi(roadModel.getRandomPosition(rng),
@@ -138,7 +135,6 @@ public final class TaxiSimulation {
         }
         boolean create_MAS = true;
         for (int i = 0; i < NUM_CUSTOMERS; i++) {
-            if(i != 0) create_MAS = false;
             simulator.register(new Customer(
                     Parcel.builder(roadModel.getRandomPosition(rng),
                             roadModel.getRandomPosition(rng))
@@ -192,7 +188,7 @@ public final class TaxiSimulation {
                                 Exploration_Ant.class, "/graphics/flat/Ants/feasibility.png")
                         .withImageAssociation(
                                 Intention_Ant.class, "/graphics/flat/Ants/intention.png"))
-                .with(TaxiRenderer.builder(Language.ENGLISH))
+                .with(SimulationRenderer.builder(Language.ENGLISH))
                 .withTitleAppendix("TaskAgent example");
 
         if (testing) {
@@ -223,7 +219,7 @@ public final class TaxiSimulation {
                     .getMultiAttributeGraphIO(
                             Filters.selfCycleFilter())
                     .read(
-                            TaxiSimulation.class.getResourceAsStream(name));
+                            Simulation.class.getResourceAsStream(name));
 
             GRAPH_CACHE.put(name, g);
             return g;

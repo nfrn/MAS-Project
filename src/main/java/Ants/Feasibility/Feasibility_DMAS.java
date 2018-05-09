@@ -1,25 +1,28 @@
-package ResourceAgent;
+package Ants.Feasibility;
 
+import ResourceAgent.Customer;
 import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.rinsim.core.SimulatorAPI;
+import com.github.rinde.rinsim.core.SimulatorUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 
 import java.util.Set;
 
-public class Feasibility_DMAS implements TickListener {
+public class Feasibility_DMAS implements TickListener, RoadUser, SimulatorUser {
 
+    public static final int LIFETIME = 4000;
     private Customer customer;
 
     private RoadModel rm;
-    private Simulator simulator;
+    private SimulatorAPI simulator;
 
     private boolean initiated;
 
-    public Feasibility_DMAS(Customer c, RoadModel rm, Simulator simulator) {
+    public Feasibility_DMAS(Customer c) {
         this.customer = c;
-        this.rm = rm;
-        this.simulator = simulator;
         this.initiated = false;
     }
 
@@ -49,5 +52,15 @@ public class Feasibility_DMAS implements TickListener {
     public void afterTick(TimeLapse timeLapse) {
         if(!initiated)
             Init_feasibility_ants();
+    }
+
+    @Override
+    public void setSimulator(SimulatorAPI simulatorAPI) {
+        this.simulator = simulatorAPI;
+    }
+
+    @Override
+    public void initRoadUser(RoadModel roadModel) {
+        this.rm = roadModel;
     }
 }

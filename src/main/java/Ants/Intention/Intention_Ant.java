@@ -1,4 +1,4 @@
-package TaskAgent;
+package Ants.Intention;
 
 import Core.Ant;
 import com.github.rinde.rinsim.geom.Point;

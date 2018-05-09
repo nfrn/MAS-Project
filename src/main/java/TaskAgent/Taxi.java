@@ -28,7 +28,7 @@ public class Taxi extends Vehicle{
     /*Extra*/
     private int current_fuel;
 
-    private Delegate_Ant_MAS delegate_ant_mas;
+    private Taxi_DMAS delegate_ant_mas;
 
     public Taxi(Point startPosition, int capacity) {
         super(VehicleDTO.builder()
@@ -39,7 +39,7 @@ public class Taxi extends Vehicle{
         curr = Optional.absent();
         current_fuel = FUELCAPACITY;
 
-        delegate_ant_mas = new Delegate_Ant_MAS();
+        delegate_ant_mas = new Taxi_DMAS();
     }
 
     @Override

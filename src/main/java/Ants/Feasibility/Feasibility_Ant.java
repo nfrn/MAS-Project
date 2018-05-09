@@ -1,6 +1,7 @@
-package ResourceAgent;
+package Ants.Feasibility;
 
 import Core.Ant;
+import ResourceAgent.Customer;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
