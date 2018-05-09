@@ -1,7 +1,6 @@
 package Ants.Feasibility;
 
 import ResourceAgent.Customer;
-import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.SimulatorUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;

@@ -10,15 +10,21 @@ import static com.google.common.collect.Maps.newHashMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import Ants.Feasibility.Feasibility_Pheromone;
+import ResourceAgent.CrossRoad;
 import ResourceAgent.Customer;
 import Ants.Feasibility.Feasibility_Ant;
 import Ants.Exploration.Exploration_Ant;
 import Ants.Intention.Intention_Ant;
+import ResourceAgent.Destination;
 import TaskAgent.Taxi;
-import TaskAgent.TaxiBase;
+import com.github.rinde.rinsim.core.model.Model;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.geom.Point;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Monitor;
@@ -52,14 +58,12 @@ import Simulation.SimulationRenderer.Language;
  */
 public final class Simulation {
 
-    private static final int NUM_DEPOTS = 1;
-    private static final int NUM_TAXIS = 2;
-    private static final int NUM_CUSTOMERS = 20;
+    private static final int NUM_TAXIS = 3;
+    private static final int NUM_CUSTOMERS = 10;
 
     // time in ms
     private static final long SERVICE_DURATION = 60000;
     private static final int TAXI_CAPACITY = 10;
-    private static final int DEPOT_CAPACITY = 100;
 
     private static final int SPEED_UP = 4;
     private static final int MAX_CAPACITY = 3;
@@ -123,24 +127,20 @@ public final class Simulation {
         final RoadModel roadModel = simulator.getModelProvider().getModel(
                 RoadModel.class);
 
-
-        // add depots, taxis and parcels to simulator
-        for (int i = 0; i < NUM_DEPOTS; i++) {
-            simulator.register(new TaxiBase(roadModel.getRandomPosition(rng),
-                    DEPOT_CAPACITY));
-        }
         for (int i = 0; i < NUM_TAXIS; i++) {
             simulator.register(new Taxi(roadModel.getRandomPosition(rng),
                     TAXI_CAPACITY));
         }
         boolean create_MAS = true;
         for (int i = 0; i < NUM_CUSTOMERS; i++) {
-            simulator.register(new Customer(
+            Customer customer = new Customer(
                     Parcel.builder(roadModel.getRandomPosition(rng),
                             roadModel.getRandomPosition(rng))
                             .serviceDuration(SERVICE_DURATION)
                             .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
-                            .buildDTO(), roadModel, simulator, create_MAS));
+                            .buildDTO(), roadModel, simulator, create_MAS);
+
+            simulator.register(customer);
         }
 
         simulator.addTickListener(new TickListener() {
@@ -148,7 +148,8 @@ public final class Simulation {
             public void tick(TimeLapse time) {
                 if (time.getStartTime() > endTime) {
                     simulator.stop();
-                } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
+                }
+              /*  } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
                     simulator.register(new Customer(
                             Parcel
                                     .builder(roadModel.getRandomPosition(rng),
@@ -156,7 +157,7 @@ public final class Simulation {
                                     .serviceDuration(SERVICE_DURATION)
                                     .neededCapacity(1 + rng.nextInt(MAX_CAPACITY))
                                     .buildDTO(), roadModel, simulator, false));
-                }
+                }*/
             }
 
             @Override
@@ -177,13 +178,13 @@ public final class Simulation {
                 .with(GraphRoadModelRenderer.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
-                                TaxiBase.class, "/graphics/perspective/tall-building-32.png")
+                                Destination.class, "/graphics/flat/deliverylocation.png")
                         .withImageAssociation(
                                 Taxi.class, "/graphics/flat/taxi-32.png")
                         .withImageAssociation(
                                 Customer.class, "/graphics/flat/person-red-32.png")
                         .withImageAssociation(
-                                Feasibility_Ant.class, "/graphics/flat/Ants/exploration.png")
+                                Feasibility_Pheromone.class, "/graphics/flat/Ants/exploration.png")
                         .withImageAssociation(
                                 Exploration_Ant.class, "/graphics/flat/Ants/feasibility.png")
                         .withImageAssociation(

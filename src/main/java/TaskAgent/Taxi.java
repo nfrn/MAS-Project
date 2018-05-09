@@ -4,6 +4,7 @@
 //
 
 package TaskAgent;
+import ResourceAgent.Customer;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
@@ -71,7 +72,10 @@ public class Taxi extends Vehicle{
                 rm.moveTo(this, curr.get().getDeliveryLocation(), time);
                 if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
                     // deliver when we arrive
+                    Customer cust = (Customer)curr.get();
+                    cust.remove();
                     pm.deliver(this, curr.get(), time);
+
                 }
             } else {
                 // it is still available, go there as fast as possible
