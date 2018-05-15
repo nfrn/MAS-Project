@@ -22,6 +22,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private final RandomGenerator rng;
     private Optional<Box> target;
     private Queue<Point> path;
+    //private Optional<AgvModel> agvModel;
 
     AgvAgent(Point startPosition, RandomGenerator r) {
         super(VehicleDTO.builder()
@@ -32,6 +33,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         rng = r;
         target = Optional.absent();
         path = new LinkedList<>();
+        //this.agvModel = Optional.absent();
     }
 
     void nextDestination() {
@@ -61,6 +63,10 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.getRoadModel().moveTo(this, this.target.get().getPickupLocation(), tm);
     }
 
+    /*void registerAgvModel(AgvModel agvModel) {
+        this.agvModel = Optional.of(agvModel);
+    }*/
+
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
 
@@ -82,6 +88,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             } else if (this.getPDPModel().containerContains(this, target.get()) &&
                     this.getRoadModel().getPosition(this).equals(target.get().getDeliveryLocation())) {
                 getPDPModel().deliver(this, target.get(), timeLapse);
+                //this.agvModel.get().store_box(getPDPModel(), this, target.get(), timeLapse);
                 target = Optional.absent();
                 Set<RoadUser> users = this.getRoadModel().getObjects();
                 users.size();

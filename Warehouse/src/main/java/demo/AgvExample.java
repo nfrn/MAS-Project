@@ -7,6 +7,7 @@ package demo;
 
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Depot;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
@@ -16,6 +17,7 @@ import com.github.rinde.rinsim.geom.LengthData;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.geom.TableGraph;
+import com.github.rinde.rinsim.scenario.generator.Depots;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.View.Builder;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
@@ -29,19 +31,22 @@ import org.apache.commons.math3.random.RandomGenerator;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.measure.unit.SI;
 import javax.print.attribute.standard.Destination;
 
 public final class AgvExample {
-    private static final double VEHICLE_LENGTH = 2.0D;
-    private static final int NUM_AGVS = 1;
-    private static final int NUM_BOXES = 1;
-    private static final long TEST_END_TIME = 600000L;
-    private static final int TEST_SPEED_UP = 16;
-    private static final long SERVICE_DURATION = 10000;
-    private static final int MAX_CAPACITY=1;
+    public static final double VEHICLE_LENGTH = 2.0D;
+    public static final int NUM_AGVS = 1;
+    public static final int NUM_BOXES = 1;
+    public static final long TEST_END_TIME = 600000L;
+    public static final int TEST_SPEED_UP = 16;
+    public static final long SERVICE_DURATION = 10000;
+    public static final int MAX_CAPACITY=1;
+    public  static final int NUM_DEPOTS=5;
 
     private AgvExample() {
     }
@@ -51,13 +56,22 @@ public final class AgvExample {
     }
 
     public static void run(boolean testing) {
+
+        List<Point> depot_locations = new ArrayList<>();
+        for(int i = 0; i < NUM_DEPOTS; ++i)
+            depot_locations.add(new Point(76,i*12));
+
         Builder viewBuilder = View.builder().with(
                     WarehouseRenderer.builder().withMargin(2.0D)
                         .withNodes())
                 .with(AGVRenderer.builder().withVehicleCoordinates().withDifferentColorsForVehicles())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
-                                Box.class, "/graphics/perspective/deliverypackage3.png"))
+                                Box.class, "/graphics/perspective/deliverypackage3.png")
+                        .withImageAssociation(
+                                Depot.class, "/graphics/perspective/tall-building-64.png"))
+                        //.withImageAssociation(
+                        //        AgvAgent.class, "/graphics/flat/forklift2.png"))
                 .withTitleAppendix("AGV example")
                 .withResolution(1300,1000);
 
@@ -65,18 +79,13 @@ public final class AgvExample {
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(DefaultPDPModel.builder())
-                .addModel(viewBuilder).build();
-
-        final RoadModel roadModel = sim.getModelProvider().getModel(
-                RoadModel.class);
+                .addModel(viewBuilder)
+                        .build();
 
         final RandomGenerator rng = sim.getRandomGenerator();
 
-        for(int i = 0; i < NUM_AGVS; ++i) {
-            sim.register(new AgvAgent(roadModel.getRandomPosition(rng),rng));
-        }
-
-
+        final RoadModel roadModel = sim.getModelProvider().getModel(
+                RoadModel.class);
 
         for(int i = 0; i < NUM_BOXES; ++i) {
             sim.register(new Box(Parcel.builder(new Point(0,i*4),
@@ -86,6 +95,14 @@ public final class AgvExample {
                     .deliveryTimeWindow(TimeWindow.create(4,6))
                     .pickupDuration(SERVICE_DURATION)
                     .buildDTO()));
+        }
+
+        for(Point loc : depot_locations) {
+            sim.register(new Depot(loc));
+        }
+
+        for(int i = 0; i < NUM_AGVS; ++i) {
+            sim.register(new AgvAgent(roadModel.getRandomPosition(rng),rng));
         }
 
         sim.start();
