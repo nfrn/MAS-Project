@@ -6,10 +6,8 @@
 package demo;
 
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Depot;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.*;
+import com.github.rinde.rinsim.core.model.road.ForwardingRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -83,7 +81,8 @@ public final class AgvExample {
        final  Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(AgvExample.GraphCreator.createGraph())
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
-                .addModel(DefaultPDPModel.builder())
+                //.addModel(DefaultPDPModel.builder())
+                .addModel(AgvModel.builder())
                 .addModel(viewBuilder)
                         .build();
 
@@ -115,7 +114,7 @@ public final class AgvExample {
             public void tick(TimeLapse time) {
 
                 PDPModel pdpModel = sim.getModelProvider().getModel(
-                        DefaultPDPModel.class);
+                        AgvModel.class);
 
                 for(Parcel parcel : pdpModel.getParcels(PICKING_UP)){
                     if(roadModel.getObjects().size()!=NUM_AGVS+NUM_BOXES+NUM_DEPOTS) {
