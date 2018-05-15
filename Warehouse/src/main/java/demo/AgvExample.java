@@ -8,9 +8,12 @@ package demo;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Depot;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.geom.Graphs;
 import com.github.rinde.rinsim.geom.LengthData;
@@ -38,10 +41,12 @@ import java.util.Map;
 import javax.measure.unit.SI;
 import javax.print.attribute.standard.Destination;
 
+import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKING_UP;
+
 public final class AgvExample {
     public static final double VEHICLE_LENGTH = 2.0D;
     public static final int NUM_AGVS = 1;
-    public static final int NUM_BOXES = 1;
+    public static final int NUM_BOXES = 13;
     public static final long TEST_END_TIME = 600000L;
     public static final int TEST_SPEED_UP = 16;
     public static final long SERVICE_DURATION = 10000;
@@ -75,7 +80,7 @@ public final class AgvExample {
                 .withTitleAppendix("AGV example")
                 .withResolution(1300,1000);
 
-        Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(AgvExample.GraphCreator.createGraph())
+       final  Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(AgvExample.GraphCreator.createGraph())
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(DefaultPDPModel.builder())
@@ -104,6 +109,33 @@ public final class AgvExample {
         for(int i = 0; i < NUM_AGVS; ++i) {
             sim.register(new AgvAgent(roadModel.getRandomPosition(rng),rng));
         }
+
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse time) {
+
+                PDPModel pdpModel = sim.getModelProvider().getModel(
+                        DefaultPDPModel.class);
+
+                for(Parcel parcel : pdpModel.getParcels(PICKING_UP)){
+                    if(roadModel.getObjects().size()!=NUM_AGVS+NUM_BOXES+NUM_DEPOTS) {
+                        System.out.println("created");
+                        sim.register(new Box(Parcel.builder(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
+                                roadModel.getRandomPosition(rng))
+                                .neededCapacity(MAX_CAPACITY)
+                                .pickupTimeWindow(TimeWindow.create(2, 4))
+                                .deliveryTimeWindow(TimeWindow.create(4, 6))
+                                .pickupDuration(SERVICE_DURATION)
+                                .buildDTO()));
+
+                    }
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {}
+        });
+
 
         sim.start();
     }
