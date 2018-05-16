@@ -11,47 +11,46 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
-import demo.AutoValue_AgvModel_Builder;
 import org.apache.commons.math3.random.RandomGenerator;
 
-import javax.annotation.CheckReturnValue;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Matija Kljun
- */
+
 public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadUser {
 
     private List<Point> depot_locations;
-    //final RandomGenerator rng;
     private SimulatorAPI simulator;
     private RoadModel roadModel;
 
     protected AgvModel(PDPModel deleg) {
         super(deleg);
+        depot_locations = new ArrayList<>();
+        for (int i = 0; i < AgvExample.NUM_DEPOTS; ++i)
+            depot_locations.add(new Point(76, i * 12));
     }
 
+    static Builder builder() {
+        return Builder.create();
+    }
 
-    void store_box(PDPModel model, AgvAgent agv, Box box, TimeLapse timeLapse, RandomGenerator r) {
+    void store_box(AgvAgent agv, Box box, TimeLapse timeLapse, RandomGenerator rng) {
         Point loc = box.getDeliveryLocation();
-        model.deliver(agv, box, timeLapse);
-        simulator.register(new Box(Parcel.builder(
-                loc,
-                depot_locations.get(r.nextInt(AgvExample.NUM_DEPOTS)))
-                .neededCapacity(AgvExample.MAX_CAPACITY)
-                .pickupTimeWindow(TimeWindow.create(2,4))
-                .deliveryTimeWindow(TimeWindow.create(4,6))
-                .pickupDuration(AgvExample.SERVICE_DURATION)
-                .buildDTO()));
+        this.deliver(agv, box, timeLapse);
+        if (box.finaldestination) {
+            System.out.println("Final destination");
+            return;
+        } else {
+            simulator.register(new Box(Parcel.builder(
+                    loc,
+                    depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)))
+                    .neededCapacity(AgvExample.MAX_CAPACITY)
+                    .pickupTimeWindow(TimeWindow.create(2, 4))
+                    .deliveryTimeWindow(TimeWindow.create(4, 6))
+                    .pickupDuration(AgvExample.SERVICE_DURATION)
+                    .buildDTO(), true));
+        }
     }
-
-
-/*
-    @Override
-    public void deliver(Vehicle vehicle, Parcel parcel, TimeLapse time) {
-        //ForwardingPDPModel.builder();
-    }
-*/
 
     @Override
     public void setSimulator(SimulatorAPI simulatorAPI) {
@@ -63,26 +62,22 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         this.roadModel = roadModel;
     }
 
-    static Builder builder() {
-        return Builder.create();
-    }
-
     @AutoValue
     public abstract static class Builder extends ModelBuilder.AbstractModelBuilder<AgvModel, PDPObject> {
         private static final long serialVersionUID = 165944940216903075L;
 
         Builder() {
-            //this.setProvidingTypes(new Class[]{DefaultPDPModel.class});
-            this.setDependencies(new Class[]{RoadModel.class});
+            setDependencies(RoadModel.class);
+            setProvidingTypes(AgvModel.class);
+        }
+
+        static Builder create() {
+            return new AutoValue_AgvModel_Builder();
         }
 
         public AgvModel build(DependencyProvider dependencyProvider) {
             DefaultPDPModel deleg = DefaultPDPModel.builder().build(dependencyProvider);
             return new AgvModel(deleg);
-        }
-
-        static Builder create() {
-            return new AutoValue_AgvModel_Builder();
         }
     }
 

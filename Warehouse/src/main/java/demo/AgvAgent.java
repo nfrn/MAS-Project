@@ -11,7 +11,6 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import com.sun.jna.platform.win32.COM.IRecordInfo;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.*;
@@ -19,16 +18,16 @@ import java.util.*;
 class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private static final double SPEED = 1;
     private static final int CAPACITY = 1;
-    public static final int POWERLIMIT = 1000;
+    public static final int POWERLIMIT = 500;
     private static final double POWERCONSUME = 0.1;
 
     private final RandomGenerator rng;
     private Optional<Box> target;
     private Queue<Point> path;
     public int power;
-    //private Optional<AgvModel> agvModel;
+    private AgvModel agvModel;
 
-    AgvAgent(Point startPosition, RandomGenerator r) {
+    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv) {
         super(VehicleDTO.builder()
                 .capacity(CAPACITY)
                 .startPosition(startPosition)
@@ -38,13 +37,13 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         target = Optional.absent();
         path = new LinkedList<>();
         power = POWERLIMIT;
-        //this.agvModel = Optional.absent();
+        this.agvModel = agv;
     }
 
     void nextDestination() {
-        if (this.getPDPModel().getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
+        if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
             // find parcel and go to it
-            Collection<Parcel> parcels = this.getPDPModel().getParcels(PDPModel.ParcelState.AVAILABLE);
+            Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
 
             Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
                     this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
@@ -58,20 +57,16 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         Iterator<Box> boxes = this.getRoadModel().getObjectsAt(this, Box.class).iterator();
 
 
-        this.getPDPModel().pickup(this, boxes.next(), tm);
+        this.agvModel.pickup(this, boxes.next(), tm);
     }
 
     void move(TimeLapse tm) {
-        if(this.getPDPModel().getContents(this).contains(target.get()))
+        if(this.agvModel.getContents(this).contains(target.get()))
             this.getRoadModel().moveTo(this, this.target.get().getDeliveryLocation(), tm);
         else
             this.getRoadModel().moveTo(this, this.target.get().getPickupLocation(), tm);
         this.power -= (POWERCONSUME*tm.getTickLength())/1000;
     }
-
-    /*void registerAgvModel(AgvModel agvModel) {
-        this.agvModel = Optional.of(agvModel);
-    }*/
 
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -90,17 +85,17 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.nextDestination();
 
         if(target.isPresent()) {
-            if (!this.getPDPModel().containerContains(this, target.get()) &&
+            if (!this.agvModel.containerContains(this, target.get()) &&
                     this.getRoadModel().getPosition(this).equals(target.get().getPickupLocation())) {
                 pickup(this.getRoadModel().getPosition(this), timeLapse);
-            } else if (this.getPDPModel().containerContains(this, target.get()) &&
+            } else if (this.agvModel.containerContains(this, target.get()) &&
                     this.getRoadModel().getPosition(this).equals(target.get().getDeliveryLocation())) {
-                getPDPModel().deliver(this, target.get(), timeLapse);
-                //this.agvModel.get().store_box(getPDPModel(), this, target.get(), timeLapse);
+                //getPDPModel().deliver(this, target.get(), timeLapse);
+                this.agvModel.store_box(this, target.get(), timeLapse,rng);
                 target = Optional.absent();
                 Set<RoadUser> users = this.getRoadModel().getObjects();
                 users.size();
-            } else if (this.getPDPModel().containerContains(this, target.get())) {
+            } else if (this.agvModel.containerContains(this, target.get())) {
                 move(timeLapse);
             } else {
                 if (getRoadModel().containsObject(target.get())) {
