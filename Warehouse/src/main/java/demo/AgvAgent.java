@@ -23,6 +23,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     private final RandomGenerator rng;
     private Optional<Box> target;
+    private Optional<BatteryCharger> target_low_battery;
     private Queue<Point> path;
     public int power;
     private AgvModel agvModel;
@@ -35,6 +36,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 .build());
         rng = r;
         target = Optional.absent();
+        target_low_battery = Optional.absent();
         path = new LinkedList<>();
         power = POWERLIMIT;
         this.agvModel = agv;
@@ -60,8 +62,13 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         this.agvModel.pickup(this, boxes.next(), tm);
     }
 
-    void move(TimeLapse tm) {
-        if(this.agvModel.getContents(this).contains(target.get()))
+    void move(TimeLapse tm,Optional final_target) {
+        if(final_target.get().getClass() == BatteryCharger.class){
+            this.getRoadModel().moveTo(this,this.getRoadModel().getPosition(target_low_battery.get()),tm);
+            this.power -= (POWERCONSUME*tm.getTickLength())/1000;
+            return;
+        }
+        if(this.agvModel.getContents(this).contains(final_target.get()))
             this.getRoadModel().moveTo(this, this.target.get().getDeliveryLocation(), tm);
         else
             this.getRoadModel().moveTo(this, this.target.get().getPickupLocation(), tm);
@@ -75,13 +82,24 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     @Override
     protected void tickImpl(TimeLapse timeLapse) {
-        if (this.power<=0){
+        if (this.power<=0 && !target_low_battery.isPresent() && !target.isPresent()){
+            Optional<BatteryCharger> curr = Optional.fromNullable(RoadModels.findClosestObject(this.getRoadModel().getPosition(this),
+                    this.getRoadModel(),BatteryCharger.class));
+
+
+            if (curr.isPresent())
+                this.target_low_battery = Optional.of(curr.get());
+                this.target = Optional.absent();
             return;
+        }
+        else if(target_low_battery.isPresent() && this.power>0){
+            this.target_low_battery = Optional.absent();
+
         }
         if (!timeLapse.hasTimeLeft()) {
             return;
         }
-        if (!target.isPresent())
+        if (!target.isPresent() && !target_low_battery.isPresent())
             this.nextDestination();
 
         if(target.isPresent()) {
@@ -96,14 +114,21 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 Set<RoadUser> users = this.getRoadModel().getObjects();
                 users.size();
             } else if (this.agvModel.containerContains(this, target.get())) {
-                move(timeLapse);
+                move(timeLapse,target);
             } else {
                 if (getRoadModel().containsObject(target.get())) {
-                    move(timeLapse);
+                    move(timeLapse,target);
                 } else {
                     target = Optional.absent();
                 }
             }
+        }
+        else if(target_low_battery.isPresent()) {
+            move(timeLapse,target_low_battery);
+            if(this.getRoadModel().getPosition(this).equals(target_low_battery.get().position)){
+                this.power=POWERLIMIT;
+            }
+
         }
     }
 

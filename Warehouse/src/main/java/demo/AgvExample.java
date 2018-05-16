@@ -73,7 +73,6 @@ public final class AgvExample {
                 .addModel(AgvModel.builder())
                 .addModel(viewBuilder)
                 .build();
-
         final RandomGenerator rng = sim.getRandomGenerator();
 
         final RoadModel roadModel = sim.getModelProvider().getModel(
