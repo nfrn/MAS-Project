@@ -11,6 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import com.sun.jna.platform.win32.COM.IRecordInfo;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.*;
@@ -18,10 +19,13 @@ import java.util.*;
 class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private static final double SPEED = 1;
     private static final int CAPACITY = 1;
+    public static final int POWERLIMIT = 1000;
+    private static final double POWERCONSUME = 0.1;
 
     private final RandomGenerator rng;
     private Optional<Box> target;
     private Queue<Point> path;
+    public int power;
     //private Optional<AgvModel> agvModel;
 
     AgvAgent(Point startPosition, RandomGenerator r) {
@@ -33,6 +37,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         rng = r;
         target = Optional.absent();
         path = new LinkedList<>();
+        power = POWERLIMIT;
         //this.agvModel = Optional.absent();
     }
 
@@ -61,6 +66,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.getRoadModel().moveTo(this, this.target.get().getDeliveryLocation(), tm);
         else
             this.getRoadModel().moveTo(this, this.target.get().getPickupLocation(), tm);
+        this.power -= (POWERCONSUME*tm.getTickLength())/1000;
     }
 
     /*void registerAgvModel(AgvModel agvModel) {
@@ -74,10 +80,12 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     @Override
     protected void tickImpl(TimeLapse timeLapse) {
+        if (this.power<=0){
+            return;
+        }
         if (!timeLapse.hasTimeLeft()) {
             return;
         }
-
         if (!target.isPresent())
             this.nextDestination();
 

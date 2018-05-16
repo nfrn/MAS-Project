@@ -87,5 +87,3 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
     }
 
 }
-
-

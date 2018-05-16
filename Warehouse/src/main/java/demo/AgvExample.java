@@ -6,8 +6,10 @@
 package demo;
 
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.pdp.*;
-import com.github.rinde.rinsim.core.model.road.ForwardingRoadModel;
+import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Depot;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -45,11 +47,12 @@ public final class AgvExample {
     public static final double VEHICLE_LENGTH = 2.0D;
     public static final int NUM_AGVS = 1;
     public static final int NUM_BOXES = 13;
+    public static final int NUM_BATTERY = 4;
+    public  static final int NUM_DEPOTS=5;
     public static final long TEST_END_TIME = 600000L;
     public static final int TEST_SPEED_UP = 16;
     public static final long SERVICE_DURATION = 10000;
     public static final int MAX_CAPACITY=1;
-    public  static final int NUM_DEPOTS=5;
 
     private AgvExample() {
     }
@@ -60,29 +63,27 @@ public final class AgvExample {
 
     public static void run(boolean testing) {
 
-        List<Point> depot_locations = new ArrayList<>();
-        for(int i = 0; i < NUM_DEPOTS; ++i)
-            depot_locations.add(new Point(76,i*12));
-
         Builder viewBuilder = View.builder().with(
                     WarehouseRenderer.builder().withMargin(2.0D)
                         .withNodes())
                 .with(AGVRenderer.builder().withVehicleCoordinates().withDifferentColorsForVehicles())
+                .with(AgvRenderer.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Box.class, "/graphics/perspective/deliverypackage3.png")
                         .withImageAssociation(
-                                Depot.class, "/graphics/perspective/tall-building-64.png"))
+                                Depot.class, "/graphics/perspective/tall-building-64.png")
                         //.withImageAssociation(
                         //        AgvAgent.class, "/graphics/flat/forklift2.png"))
+                        .withImageAssociation(
+                                BatteryCharger.class,"/graphics/flat/warehouse-32.png"))
                 .withTitleAppendix("AGV example")
                 .withResolution(1300,1000);
 
        final  Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(AgvExample.GraphCreator.createGraph())
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
-                //.addModel(DefaultPDPModel.builder())
-                .addModel(AgvModel.builder())
+                .addModel(DefaultPDPModel.builder())
                 .addModel(viewBuilder)
                         .build();
 
@@ -101,9 +102,18 @@ public final class AgvExample {
                     .buildDTO()));
         }
 
+        List<Point> depot_locations = new ArrayList<>();
+        for(int i = 0; i < NUM_DEPOTS; ++i)
+            depot_locations.add(new Point(76,i*12));
+
         for(Point loc : depot_locations) {
             sim.register(new Depot(loc));
         }
+
+        sim.register(new BatteryCharger(new Point(36.0D, 4.0D)));
+        sim.register(new BatteryCharger(new Point(36.0D, 44.0D)));
+        sim.register(new BatteryCharger(new Point(40.0D, 4.0D)));
+        sim.register(new BatteryCharger(new Point(40.0D, 44.0D)));
 
         for(int i = 0; i < NUM_AGVS; ++i) {
             sim.register(new AgvAgent(roadModel.getRandomPosition(rng),rng));
@@ -114,10 +124,10 @@ public final class AgvExample {
             public void tick(TimeLapse time) {
 
                 PDPModel pdpModel = sim.getModelProvider().getModel(
-                        AgvModel.class);
+                        DefaultPDPModel.class);
 
                 for(Parcel parcel : pdpModel.getParcels(PICKING_UP)){
-                    if(roadModel.getObjects().size()!=NUM_AGVS+NUM_BOXES+NUM_DEPOTS) {
+                    if(roadModel.getObjects().size()!=NUM_AGVS+NUM_BOXES+NUM_DEPOTS+NUM_BATTERY) {
                         System.out.println("created");
                         sim.register(new Box(Parcel.builder(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
                                 roadModel.getRandomPosition(rng))
@@ -207,6 +217,19 @@ public final class AgvExample {
             Graphs.addBiPath(g, new Point[]{(Point)rightMatrix.get(9, 0), (Point)centerMatrix.get(4, 9)});
             Graphs.addBiPath(g, new Point[]{(Point)rightMatrix.get(11, 0), (Point)centerMatrix.get(6, 9)});
 
+
+            //Battery Charge1
+
+            Graphs.addBiPath(g, new Point(36.0D, 4.0D), (Point)centerMatrix.get(0, 3));
+            Graphs.addBiPath(g, new Point(36.0D, 4.0D) , new Point(40.0D, 4.0D));
+            Graphs.addBiPath(g, new Point(40.0D, 4.0D) , (Point)centerMatrix.get(0, 6));
+
+
+            //Battery Charge2
+
+            Graphs.addBiPath(g, new Point(36.0D, 44.0D), (Point)centerMatrix.get(6, 3));
+            Graphs.addBiPath(g, new Point(36.0D, 44.0D) , new Point(40.0D, 44.0D));
+            Graphs.addBiPath(g, new Point(40.0D, 44.0D) , (Point)centerMatrix.get(6, 6));
 
             return new ListenableGraph(g);
         }
