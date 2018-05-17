@@ -136,6 +136,11 @@ public final class AgvExample {
 
                     }
                 }
+                //Example how to release ants
+                DMASModel dmasModel = sim.getModelProvider().getModel(DMASModel.class);
+                dmasModel.releaseAnts(0);
+                dmasModel.releaseAnts(1);
+                dmasModel.releaseAnts(2);
             }
 
             @Override

@@ -1,48 +1,62 @@
 package DelgMas;
 
-import com.github.rinde.rinsim.util.TimeWindow;
+import VisitorClasses.Ants.Ant;
+import VisitorClasses.Ants.Ant_A;
+import VisitorClasses.Ants.Ant_B;
+import VisitorClasses.Ants.Ant_C;
+import VisitorClasses.Pheromones.Pheromone;
+import VisitorClasses.Pheromones.Pheromone_A;
+import VisitorClasses.Pheromones.Pheromone_B;
+import VisitorClasses.Pheromones.Pheromone_C;
+import VisitorClasses.Visitable;
+import com.github.rinde.rinsim.geom.Point;
 import java.util.ArrayList;
 
-public class PheromoneStorage {
-    public ArrayList<TimeWindow> booked;
-    public int lifetime_booking;
-    public ArrayList<TimeWindow> chargerSpots;
-    public int lifetime_charger;
+public class PheromoneStorage implements Visitable {
 
-    public PheromoneStorage(int lifetime){
-        this.lifetime_booking=lifetime;
-        this.lifetime_charger=lifetime;
-        this.booked = new ArrayList<TimeWindow>();
-        this.chargerSpots = new ArrayList<TimeWindow>(AgvExample.NUM_BATTERY);
+    public static final int LIFETIME_A=100;
+    public static final int LIFETIME_B=100;
+    public static final int LIFETIME_C=100;
+
+
+    ArrayList<Pheromone_A> list_phero_A;
+    ArrayList<Pheromone_B> list_phero_B;
+    ArrayList<Pheromone_C> list_phero_C;
+    Point position;
+
+    public PheromoneStorage(Point point){
+        this.position=point;
+        list_phero_A = new ArrayList<Pheromone_A>();
+        list_phero_B = new ArrayList<Pheromone_B>();
+        list_phero_C = new ArrayList<Pheromone_C>();
     }
 
-    public int booking(TimeWindow tw){
-        for(TimeWindow tw1 : booked){
-            if(tw1.end() < tw.begin() || tw1.begin() > tw.end()){
-                this.booked.add(tw);
-                this.lifetime_booking= 100;
-                System.out.println("Time window is possible. Booked!");
-                return 1;
-            }
+    public void time_passed(){
+        for(Pheromone_A pheA : this.list_phero_A){
+            pheA.decreaseLifeTime();
         }
-        System.out.println("Time window is not possible. Failed!");
-        return -1;
+        for(Pheromone_B pheB : this.list_phero_B){
+            pheB.decreaseLifeTime();
+        }
+        for(Pheromone_C pheC : this.list_phero_C){
+            pheC.decreaseLifeTime();
+        }
     }
 
-    public void setChargerSpots(int chargernumber, TimeWindow fulltw){
-        this.chargerSpots.set(chargernumber,fulltw);
-        this.lifetime_charger= 100;
-    }
-
-    public int timepassing(int units){
-        this.lifetime_booking-=units;
-        this.lifetime_charger-=units;
-        if (this.lifetime_booking < 0){
-            this.booked.clear();
+    @Override
+    public void accept(Ant ant) {
+        if(ant.getClass()== Ant_A.class) {
+            Pheromone_A pheromone_A = new Pheromone_A(LIFETIME_A);
+            ant.dropPheromone(pheromone_A);
+            list_phero_A.add(pheromone_A);
+        }else if(ant.getClass()== Ant_B.class) {
+            Pheromone_B pheromone_B = new Pheromone_B(LIFETIME_B);
+            ant.dropPheromone(pheromone_B);
+            list_phero_B.add(pheromone_B);
+        }else if(ant.getClass()== Ant_C.class) {
+            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_C);
+            ant.dropPheromone(pheromone_C);
+            list_phero_C.add(pheromone_C);
         }
-        if (this.lifetime_charger < 0){
-            this.chargerSpots.clear();
-        }
-        return 0;
     }
 }
