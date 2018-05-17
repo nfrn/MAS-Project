@@ -71,6 +71,7 @@ public final class AgvExample {
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(AgvModel.builder())
+                .addModel(DMASModel.builder())
                 .addModel(viewBuilder)
                 .build();
         final RandomGenerator rng = sim.getRandomGenerator();

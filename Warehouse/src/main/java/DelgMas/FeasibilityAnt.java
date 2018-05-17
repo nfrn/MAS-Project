@@ -1,8 +1,5 @@
-package demo.Ants;
+package DelgMas;
 
-/**
- * @author Matija Kljun
- */
 public class FeasibilityAnt {
     public static final int HOPS_NUM = 3;
     private int hop;
