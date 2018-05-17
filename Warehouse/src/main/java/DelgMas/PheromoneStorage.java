@@ -46,15 +46,16 @@ public class PheromoneStorage implements Visitable {
     @Override
     public void accept(Ant ant) {
         if(ant.getClass()== Ant_A.class) {
-            Pheromone_A pheromone_A = new Pheromone_A(LIFETIME_A);
+            //Go to chargers and see their availabiliy. Register that in Pheromone_A
+            Pheromone_A pheromone_A = new Pheromone_A(LIFETIME_A,position);
             ant.dropPheromone(pheromone_A);
             list_phero_A.add(pheromone_A);
         }else if(ant.getClass()== Ant_B.class) {
-            Pheromone_B pheromone_B = new Pheromone_B(LIFETIME_B);
+            Pheromone_B pheromone_B = new Pheromone_B(LIFETIME_B,position);
             ant.dropPheromone(pheromone_B);
             list_phero_B.add(pheromone_B);
         }else if(ant.getClass()== Ant_C.class) {
-            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_C);
+            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_C,position);
             ant.dropPheromone(pheromone_C);
             list_phero_C.add(pheromone_C);
         }

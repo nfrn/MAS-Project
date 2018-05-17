@@ -37,19 +37,20 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public void releaseAnts(int type){
         if(type==0){
-            Ant_A antA = new Ant_A();
+            //Go to chargers and see their availabiliy. Register that in Pheromone_A
+            Ant_A antA = new Ant_A(am);
             for(PheromoneStorage pheroStore: nodes){
                 pheroStore.accept(antA);
             }
         }
         else if(type==1){
-            Ant_B antB = new Ant_B();
+            Ant_B antB = new Ant_B(am);
             for(PheromoneStorage pheroStore: nodes){
                 pheroStore.accept(antB);
             }
         }
         else if(type==2){
-            Ant_C antC = new Ant_C();
+            Ant_C antC = new Ant_C(am);
             for(PheromoneStorage pheroStore: nodes){
                 pheroStore.accept(antC);
             }

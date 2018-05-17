@@ -53,6 +53,10 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         }
     }
 
+    public RoadModel getRoadModel() {
+        return roadModel;
+    }
+
     @Override
     public void setSimulator(SimulatorAPI simulatorAPI) {
         this.simulator = simulatorAPI;
