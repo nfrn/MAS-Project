@@ -6,6 +6,6 @@ import VisitorClasses.Pheromones.Pheromone_C;
 
 public interface Visitor {
     public void dropPheromone(Pheromone_A pheromone);
-    public void dropPheromone(Pheromone_B pheromone);
+    public int dropPheromone(Pheromone_B pheromone);
     public void dropPheromone(Pheromone_C pheromone);
 }

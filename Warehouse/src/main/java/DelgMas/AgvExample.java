@@ -76,6 +76,7 @@ public final class AgvExample {
                 .build();
         final RandomGenerator rng = sim.getRandomGenerator();
 
+        final DMASModel dmasModel = sim.getModelProvider().getModel(DMASModel.class);
         final RoadModel roadModel = sim.getModelProvider().getModel(
                 RoadModel.class);
         final AgvModel agvModel = sim.getModelProvider().getModel(
@@ -114,7 +115,7 @@ public final class AgvExample {
         sim.register(new BatteryCharger(new Point(40.0D, 44.0D)));
 
         for (int i = 0; i < NUM_AGVS; ++i) {
-            sim.register(new AgvAgent(roadModel.getRandomPosition(rng), rng, agvModel));
+            sim.register(new AgvAgent(roadModel.getRandomPosition(rng), rng, agvModel,dmasModel));
         }
 
         sim.addTickListener(new TickListener() {

@@ -16,13 +16,14 @@ public class Ant_A extends Ant{
 
     @Override
     public void dropPheromone(Pheromone_A pheromone) {
-        //.out.println("Changed|Added Pheromone A");
         BatteryCharger bc = RoadModels.findClosestObject(pheromone.position,agv.getRoadModel(),BatteryCharger.class);
         pheromone.chargers_booking = bc.getBooked();
+        //System.out.println(pheromone.position + "knows that the closest charger is booked:" + pheromone.chargers_booking);
     }
 
     @Override
-    public void dropPheromone(Pheromone_B pheromone) {
+    public int dropPheromone(Pheromone_B pheromone) {
+        return 0;
     }
 
     @Override

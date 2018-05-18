@@ -14,49 +14,78 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
 
 import java.util.*;
 
 public class DMASModel implements TickListener, Model<Point> {
 
+    private static final int ANT_A_FREQUENCY = 15000;
+    private static final int ANT_B_FREQUENCY = 15000;
+    private int clock_A;
+    private int clock_B;
     private RoadModel rm;
     private AgvModel am;
     private GraphRoadModel grm;
     private ArrayList<PheromoneStorage> nodes;
 
+
     public DMASModel(RoadModel roadModel, AgvModel agvModel, GraphRoadModel grm) {
         this.rm = roadModel;
         this.am = agvModel;
         this.grm = grm;
+        this.clock_A = 0;
+        this.clock_B = 0;
         nodes = new ArrayList<PheromoneStorage>();
         for(Point p : grm.getGraph().getNodes()){
             this.nodes.add(new PheromoneStorage(p));
         }
     }
 
-    public void releaseAnts(int type){
-        if(type==0){
-            //Go to chargers and see their availabiliy. Register that in Pheromone_A
-            Ant_A antA = new Ant_A(am);
-            for(PheromoneStorage pheroStore: nodes){
-                pheroStore.accept(antA);
-            }
+    public void releaseAnts_A(){
+        //Go to chargers and see their availabiliy. Register that in Pheromone_A
+        System.out.println("Ants_A released");
+        Ant_A antA = new Ant_A(am);
+        for(PheromoneStorage pheroStore: nodes){
+            pheroStore.accept(antA);
         }
-        else if(type==1){
-            Ant_B antB = new Ant_B(am);
-            for(PheromoneStorage pheroStore: nodes){
-                pheroStore.accept(antB);
-            }
-        }
-        else if(type==2){
-            Ant_C antC = new Ant_C(am);
-            for(PheromoneStorage pheroStore: nodes){
-                pheroStore.accept(antC);
-            }
-        }
-
+        antA=null;
     }
+
+    public int releaseAnts_B(Queue<Point> path, TimeWindow tw){
+        //Go to Path and check if it is free
+        System.out.println("Ants_B released");
+        Ant_B antB = new Ant_B(am,tw);
+        for(Point pt : path) {
+            for (PheromoneStorage pheroStore : nodes) {
+                if (pheroStore.position.equals(pt)){
+                    int result = pheroStore.accept(antB);
+                    if(result==-1){
+                        return -1;
+                    }
+                }
+            }
+        }
+        antB=null;
+        return 0;
+    }
+
+
+    public void releaseAnts_C(Queue<Point> path, TimeWindow tw){
+        //Go to Path and tell to book it
+        System.out.println("Ants_C released");
+        Ant_C antC = new Ant_C(am,tw);
+        for(Point pt : path) {
+            for (PheromoneStorage pheroStore : nodes) {
+                if (pheroStore.position.equals(pt)){
+                    pheroStore.accept(antC);
+                }
+            }
+        }
+        antC=null;
+    }
+
 
 
     static DMASModel.Builder builder() {
@@ -65,9 +94,18 @@ public class DMASModel implements TickListener, Model<Point> {
 
     @Override
     public void tick(TimeLapse timeLapse) {
+        this.clock_A += timeLapse.getTickLength();
+        this.clock_B += timeLapse.getTickLength();
+
+        if(this.clock_A >= ANT_A_FREQUENCY) {
+            this.clock_A=0;
+            this.releaseAnts_A();
+        }
+
         for(PheromoneStorage phestore : nodes){
             phestore.time_passed();
         }
+
     }
 
     @AutoValue

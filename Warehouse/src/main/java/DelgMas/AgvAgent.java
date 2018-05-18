@@ -27,8 +27,9 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private Queue<Point> path;
     public int power;
     private AgvModel agvModel;
+    private DMASModel dmasModel;
 
-    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv) {
+    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas) {
         super(VehicleDTO.builder()
                 .capacity(CAPACITY)
                 .startPosition(startPosition)
@@ -40,6 +41,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         path = new LinkedList<>();
         power = POWERLIMIT;
         this.agvModel = agv;
+        this.dmasModel=dmas;
     }
 
     void nextDestination() {
@@ -63,15 +65,26 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     }
 
     void move(TimeLapse tm,Optional final_target) {
+        Point dest;
         if(final_target.get().getClass() == BatteryCharger.class){
-            this.getRoadModel().moveTo(this,this.getRoadModel().getPosition(target_low_battery.get()),tm);
-            this.power -= (POWERCONSUME*tm.getTickLength())/1000;
-            return;
+            dest = this.getRoadModel().getPosition(target_low_battery.get());
         }
-        if(this.agvModel.getContents(this).contains(final_target.get()))
-            this.getRoadModel().moveTo(this, this.target.get().getDeliveryLocation(), tm);
-        else
-            this.getRoadModel().moveTo(this, this.target.get().getPickupLocation(), tm);
+        else if(this.agvModel.getContents(this).contains(final_target.get())) {
+            dest = this.target.get().getDeliveryLocation();
+        }
+        else {
+            dest = this.target.get().getPickupLocation();
+        }
+
+        List<Point> shortestPathTo =this.getRoadModel().getShortestPathTo(this,dest);
+        Queue<Point> queue = new LinkedList<>(shortestPathTo);
+        //
+        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
+        if(result==-1){
+            System.out.println("The path is already booked");
+        }
+        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+        this.getRoadModel().followPath(this,queue,tm);
         this.power -= (POWERCONSUME*tm.getTickLength())/1000;
     }
 
@@ -82,11 +95,10 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     @Override
     protected void tickImpl(TimeLapse timeLapse) {
+
         if (this.power<=0 && !target_low_battery.isPresent() && !target.isPresent()){
             Optional<BatteryCharger> curr = Optional.fromNullable(RoadModels.findClosestObject(this.getRoadModel().getPosition(this),
                     this.getRoadModel(), BatteryCharger.class));
-
-
             if (curr.isPresent())
                 this.target_low_battery = Optional.of(curr.get());
                 this.target = Optional.absent();
@@ -103,6 +115,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.nextDestination();
 
         if(target.isPresent()) {
+
             if (!this.agvModel.containerContains(this, target.get()) &&
                     this.getRoadModel().getPosition(this).equals(target.get().getPickupLocation())) {
                 pickup(this.getRoadModel().getPosition(this), timeLapse);

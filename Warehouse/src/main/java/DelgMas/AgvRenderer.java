@@ -49,7 +49,7 @@ public class AgvRenderer extends CanvasRenderer.AbstractCanvasRenderer {
         final Image image = uiSchema.getImage(AgvAgent.class);
         checkState(image != null);
 
-        synchronized (agvModel) {
+        synchronized (vehicles) {
             for (Vehicle v : vehicles) {
                 AgvAgent agent = (AgvAgent) v;
                 String text = String.format("%.0f ", (double) agent.power / agent.POWERLIMIT * 100) + "%";

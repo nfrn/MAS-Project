@@ -18,8 +18,8 @@ public class Ant implements Visitor {
     }
 
     @Override
-    public void dropPheromone(Pheromone_B pheromone) {
-
+    public int dropPheromone(Pheromone_B pheromone) {
+        return 1;
     }
 
     @Override

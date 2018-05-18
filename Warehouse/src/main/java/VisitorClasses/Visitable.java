@@ -3,5 +3,5 @@ package VisitorClasses;
 import VisitorClasses.Ants.Ant;
 
 public interface Visitable {
-    public void accept(Ant ant);
+    public int accept(Ant ant);
 }
