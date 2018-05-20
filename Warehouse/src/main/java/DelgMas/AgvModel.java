@@ -18,6 +18,8 @@ import org.apache.commons.math3.random.RandomGenerator;
 import java.util.ArrayList;
 import java.util.List;
 
+import static DelgMas.AgvExample.NUM_AGVS;
+import static DelgMas.AgvExample.NUM_BOXES;
 
 
 public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadUser {
@@ -43,11 +45,16 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
 
     void store_box(AgvAgent agv, Box box, TimeLapse timeLapse, RandomGenerator rng) {
         Point loc = box.getDeliveryLocation();
+        System.out.println(getRoadModel().getObjectsOfType(Box.class));
         this.deliver(agv, box, timeLapse);
         if (box.finaldestination) {
+            System.out.println("Drop for ever");
+            System.out.println(getRoadModel().getObjectsOfType(Box.class));
             return;
-        } else {
+        } else if (roadModel.getObjectsOfType(Parcel.class).size() <=NUM_BOXES+NUM_AGVS) {
             long currentTime = timeLapse.getTime();
+            System.out.println("Drop for a bit");
+            System.out.println(getRoadModel().getObjectsOfType(Box.class));
             simulator.register(new Box(loc,
                     depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime , true));
         }

@@ -12,6 +12,7 @@ import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
@@ -47,6 +48,7 @@ public final class AgvExample {
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
     //Positions
+    public static List<Point> box_positions;
     public static List<Point> storage_positions;
     public static List<Point> charger_positions;
     public static List<Point> depot_positions;
@@ -103,6 +105,11 @@ public final class AgvExample {
                 storage_positions.add(new Point(20 + x * 4, 12 + y * 4));
             }
         }
+
+        box_positions = new ArrayList<>();
+        for (int x = 0; x < NUM_BOXES; ++x) {
+            box_positions.add(new Point(0, x * 4));
+        }
         charger_positions = new ArrayList<>();
         charger_positions.add(new Point(36.0D,4.0D));
         charger_positions.add(new Point(36.0D,44.0D));
@@ -111,7 +118,7 @@ public final class AgvExample {
 
         //Register
         for (int i = 0; i < NUM_BOXES; ++i) {
-            sim.register(new Box(new Point(0, i * 4),
+            sim.register(new Box(box_positions.get(i),
                     storage_positions.get(rng.nextInt(storage_positions.size())), 0,false));
             }
 
@@ -135,15 +142,36 @@ public final class AgvExample {
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
 
-                AgvModel pdpModel = sim.getModelProvider().getModel(
-                        AgvModel.class);
-                for (Parcel parcel : pdpModel.getParcels(PICKING_UP)) {
-                    if (roadModel.getObjects().size() != NUM_AGVS + NUM_BOXES + NUM_DEPOTS + NUM_BATTERY) {
+
+                for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
+                    boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
+                    boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
+                    if(is_beg && !is_anything_there){
+                        System.out.println("Added in fountain");
                         sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
                                 storage_positions.get(rng.nextInt(storage_positions.size())),currentTime, false));
+                    }
 
+                }
+            }
+
+            public boolean is_anything_there(Point orig){
+                for(RoadUser ruser: roadModel.getObjects()){
+                    if(roadModel.getPosition(ruser).equals(orig)){
+                        return true;
                     }
                 }
+                return false;
+            }
+
+            public boolean was_from_begining(Point orig){
+                boolean is_from_there = false;
+                for(Point position : box_positions){
+                    if(orig.equals(position)){
+                        is_from_there= true;
+                    }
+                }
+                return is_from_there;
             }
 
             @Override
@@ -154,6 +182,7 @@ public final class AgvExample {
 
         sim.start();
     }
+
 
     static class GraphCreator {
 

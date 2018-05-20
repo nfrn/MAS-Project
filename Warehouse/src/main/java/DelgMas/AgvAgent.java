@@ -66,8 +66,11 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     }
 
     void pickupBox(TimeLapse tm) {
-        Iterator<Box> boxes = this.getRoadModel().getObjectsAt(this, Box.class).iterator();
-        this.agvModel.pickup(this, boxes.next(), tm);
+        System.out.println(getRoadModel().getObjectsOfType(Box.class));
+        System.out.println("Pick up");
+        this.agvModel.pickup(this, target.get(), tm);
+        System.out.println(getRoadModel().getObjectsOfType(Box.class));
+
     }
 
     void pickupBattery(TimeLapse tm) {
