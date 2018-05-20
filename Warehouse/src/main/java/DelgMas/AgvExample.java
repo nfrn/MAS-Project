@@ -7,11 +7,14 @@ package DelgMas;
 
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.Depot;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.View.Builder;
@@ -23,25 +26,32 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.measure.quantity.Duration;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.AVAILABLE;
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKING_UP;
 
 public final class AgvExample {
+    //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
     public static final int NUM_AGVS = 1;
-    public static final int NUM_BOXES = 13;
+    public static final int NUM_BOXES = 2;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
-    public static final long TEST_END_TIME = 600000L;
-    public static final int TEST_SPEED_UP = 16;
-    public static final long SERVICE_DURATION = 10000;
     public static final int MAX_CAPACITY = 1;
+    //Positions
     public static List<Point> storage_positions;
+    public static List<Point> charger_positions;
+    public static List<Point> depot_positions;
+    //Time
+    public static final long TICK_LENGTH= 1000;
 
     private AgvExample() {
     }
@@ -67,7 +77,7 @@ public final class AgvExample {
                 .withTitleAppendix("AGV example")
                 .withResolution(1300, 1000);
 
-        final Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(AgvExample.GraphCreator.createGraph())
+        final Simulator sim = Simulator.builder().addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createGraph())
                 .withCollisionAvoidance().withDistanceUnit(SI.METER)
                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(AgvModel.builder())
@@ -83,9 +93,9 @@ public final class AgvExample {
                 AgvModel.class);
 
         // Initial positions
-        List<Point> depot_locations = new ArrayList<>();
+        depot_positions = new ArrayList<>();
         for (int i = 0; i < NUM_DEPOTS; ++i)
-            depot_locations.add(new Point(76, i * 12));
+            depot_positions.add(new Point(76, i * 12));
 
         storage_positions = new ArrayList<>();
         for (int x = 0; x < 10; ++x) {
@@ -93,55 +103,47 @@ public final class AgvExample {
                 storage_positions.add(new Point(20 + x * 4, 12 + y * 4));
             }
         }
+        charger_positions = new ArrayList<>();
+        charger_positions.add(new Point(36.0D,4.0D));
+        charger_positions.add(new Point(36.0D,44.0D));
+        charger_positions.add(new Point(40.0D,4.0D));
+        charger_positions.add(new Point(40.0D,44.0D));
 
+        //Register
         for (int i = 0; i < NUM_BOXES; ++i) {
-            sim.register(new Box(Parcel.builder(new Point(0, i * 4),
-                    storage_positions.get(rng.nextInt(storage_positions.size())))
-                    .neededCapacity(MAX_CAPACITY)
-                    .pickupTimeWindow(TimeWindow.create(2, 4))
-                    .deliveryTimeWindow(TimeWindow.create(4, 6))
-                    .pickupDuration(SERVICE_DURATION)
-                    .buildDTO(), false));
-        }
+            sim.register(new Box(new Point(0, i * 4),
+                    storage_positions.get(rng.nextInt(storage_positions.size())), 0,false));
+            }
 
-
-        for (Point loc : depot_locations) {
+        for (Point loc : depot_positions) {
             sim.register(new Depot(loc));
         }
 
-        sim.register(new BatteryCharger(new Point(36.0D, 4.0D)));
-        sim.register(new BatteryCharger(new Point(36.0D, 44.0D)));
-        sim.register(new BatteryCharger(new Point(40.0D, 4.0D)));
-        sim.register(new BatteryCharger(new Point(40.0D, 44.0D)));
+        for (Point loc : charger_positions) {
+            sim.register(new BatteryCharger(loc));
+        }
 
         for (int i = 0; i < NUM_AGVS; ++i) {
-            sim.register(new AgvAgent(roadModel.getRandomPosition(rng), rng, agvModel,dmasModel));
+            Point position = roadModel.getRandomPosition(rng);
+            sim.register(new AgvAgent(position, rng, agvModel,dmasModel));
+            sim.register(new Battery(position));
         }
 
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(TimeLapse time) {
+                TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
+                long currentTime = tm.getCurrentTime();
 
                 AgvModel pdpModel = sim.getModelProvider().getModel(
                         AgvModel.class);
-
                 for (Parcel parcel : pdpModel.getParcels(PICKING_UP)) {
                     if (roadModel.getObjects().size() != NUM_AGVS + NUM_BOXES + NUM_DEPOTS + NUM_BATTERY) {
-                        sim.register(new Box(Parcel.builder(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
-                                storage_positions.get(rng.nextInt(storage_positions.size())))
-                                .neededCapacity(MAX_CAPACITY)
-                                .pickupTimeWindow(TimeWindow.create(2, 4))
-                                .deliveryTimeWindow(TimeWindow.create(4, 6))
-                                .pickupDuration(SERVICE_DURATION)
-                                .buildDTO(), false));
+                        sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
+                                storage_positions.get(rng.nextInt(storage_positions.size())),currentTime, false));
 
                     }
                 }
-                //Example how to release ants
-                //DMASModel dmasModel = sim.getModelProvider().getModel(DMASModel.class);
-                //dmasModel.releaseAnts(0);
-                //dmasModel.releaseAnts(1);
-                //dmasModel.releaseAnts(2);
             }
 
             @Override

@@ -8,6 +8,7 @@ import com.github.rinde.rinsim.core.model.pdp.*;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
@@ -16,6 +17,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 
 public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadUser {
@@ -31,6 +33,10 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
             depot_locations.add(new Point(76, i * 12));
     }
 
+    @Override
+    public TimeWindowPolicy getTimeWindowPolicy(){
+        return TimeWindowPolicy.TimeWindowPolicies.STRICT;
+    }
     static Builder builder() {
         return Builder.create();
     }
@@ -39,18 +45,16 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         Point loc = box.getDeliveryLocation();
         this.deliver(agv, box, timeLapse);
         if (box.finaldestination) {
-            System.out.println("Final destination");
             return;
         } else {
-            simulator.register(new Box(Parcel.builder(
-                    loc,
-                    depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)))
-                    .neededCapacity(AgvExample.MAX_CAPACITY)
-                    .pickupTimeWindow(TimeWindow.create(2, 4))
-                    .deliveryTimeWindow(TimeWindow.create(4, 6))
-                    .pickupDuration(AgvExample.SERVICE_DURATION)
-                    .buildDTO(), true));
+            long currentTime = timeLapse.getTime();
+            simulator.register(new Box(loc,
+                    depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime , true));
         }
+    }
+
+    public void registerBattery(Battery battery){
+        this.simulator.register(battery);
     }
 
     public RoadModel getRoadModel() {

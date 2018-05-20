@@ -45,14 +45,18 @@ public class AgvRenderer extends CanvasRenderer.AbstractCanvasRenderer {
     public void renderDynamic(GC gc, ViewPort viewPort, long l) {
         uiSchema.initialize(gc.getDevice());
 
-        final Collection<Vehicle> vehicles = agvModel.getVehicles();
-        final Image image = uiSchema.getImage(AgvAgent.class);
-        checkState(image != null);
-
-        synchronized (vehicles) {
+        synchronized (agvModel) {
+            final Collection<Vehicle> vehicles = agvModel.getVehicles();
+            final Image image = uiSchema.getImage(AgvAgent.class);
+            checkState(image != null);
             for (Vehicle v : vehicles) {
                 AgvAgent agent = (AgvAgent) v;
-                String text = String.format("%.0f ", (double) agent.power / agent.POWERLIMIT * 100) + "%";
+                Battery battery = ((AgvAgent) v).getBattery();
+                long power = 0;
+                if(battery!=null){
+                    power=battery.capacity;
+                }
+                String text = String.format("%.0f ", (double) power / agent.POWERLIMIT * 100) + "%";
                 Point pos = roadModel.getPosition(v);
                 int x = viewPort.toCoordX(pos.x);
                 int y = viewPort.toCoordY(pos.y);

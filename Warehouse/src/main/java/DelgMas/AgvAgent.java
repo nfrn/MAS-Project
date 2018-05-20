@@ -15,19 +15,21 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.*;
 
+import static DelgMas.Battery.CHARGING_DURATION;
+
 class AgvAgent extends Vehicle implements TickListener, RoadUser {
-    private static final double SPEED = 1;
-    private static final int CAPACITY = 1;
     public static final int POWERLIMIT = 500;
+    private static final double SPEED = 1;
+    private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 0.1;
 
-    private final RandomGenerator rng;
-    private Optional<Box> target;
-    private Optional<BatteryCharger> target_low_battery;
-    private Queue<Point> path;
-    public int power;
+    private RandomGenerator rng;
     private AgvModel agvModel;
     private DMASModel dmasModel;
+
+    public boolean hasBattery;
+    private Optional<Parcel> target;
+    private Queue<Point> path;
 
     AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas) {
         super(VehicleDTO.builder()
@@ -35,57 +37,63 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 .startPosition(startPosition)
                 .speed(SPEED)
                 .build());
-        rng = r;
-        target = Optional.absent();
-        target_low_battery = Optional.absent();
-        path = new LinkedList<>();
-        power = POWERLIMIT;
+
         this.agvModel = agv;
-        this.dmasModel=dmas;
+        this.dmasModel = dmas;
+        this.rng = r;
+
+        target = Optional.absent();
+        path = new LinkedList<>();
+        this.hasBattery = false;
+
     }
 
     void nextDestination() {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
-            // find parcel and go to it
-            Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
-
-            Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
-                    this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
-
-            if (curr.isPresent())
-                this.target = Optional.of(curr.get());
+            if (getBattery().capacity > 20) {
+                Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
+                Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
+                        this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
+                if (curr.isPresent())
+                    this.target = Optional.of((Parcel) curr.get());
+            } else {
+                BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
+                Battery battery = getBattery();
+                battery.destination = batteryCharger.position;
+                this.target = Optional.of((Parcel) battery);
+            }
         }
     }
 
-    void pickup(Point loc, TimeLapse tm) {
+    void pickupBox(TimeLapse tm) {
         Iterator<Box> boxes = this.getRoadModel().getObjectsAt(this, Box.class).iterator();
-
-
         this.agvModel.pickup(this, boxes.next(), tm);
     }
 
-    void move(TimeLapse tm,Optional final_target) {
+    void pickupBattery(TimeLapse tm) {
+        this.agvModel.pickup(this, RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), Battery.class), tm);
+    }
+
+    void moveBattery(TimeLapse tm) {
+        Battery battery = (Battery) this.target.get();
+        List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
+        Queue<Point> queue = new LinkedList<>(shortestPathTo);
+        this.getRoadModel().followPath(this, queue, tm);
+        this.getBattery().capacity -= POWERCONSUME;
+    }
+
+    void moveBox(TimeLapse tm){
         Point dest;
-        if(final_target.get().getClass() == BatteryCharger.class){
-            dest = this.getRoadModel().getPosition(target_low_battery.get());
-        }
-        else if(this.agvModel.getContents(this).contains(final_target.get())) {
+        if (this.agvModel.getContents(this).contains(target.get())) {
             dest = this.target.get().getDeliveryLocation();
-        }
-        else {
+        } else {
             dest = this.target.get().getPickupLocation();
         }
 
-        List<Point> shortestPathTo =this.getRoadModel().getShortestPathTo(this,dest);
+        List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
-        //
-        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
-        if(result==-1){
-            System.out.println("The path is already booked");
-        }
-        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
-        this.getRoadModel().followPath(this,queue,tm);
-        this.power -= (POWERCONSUME*tm.getTickLength())/1000;
+        this.getRoadModel().followPath(this, queue, tm);
+        this.getBattery().capacity -= POWERCONSUME;
     }
 
     @Override
@@ -95,58 +103,96 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     @Override
     protected void tickImpl(TimeLapse timeLapse) {
+        //First task is every agent to load the battery they have.
+        //Battery battery = getBattery();
 
-        if (this.power<=0 && !target_low_battery.isPresent() && !target.isPresent()){
-            Optional<BatteryCharger> curr = Optional.fromNullable(RoadModels.findClosestObject(this.getRoadModel().getPosition(this),
-                    this.getRoadModel(), BatteryCharger.class));
-            if (curr.isPresent())
-                this.target_low_battery = Optional.of(curr.get());
-                this.target = Optional.absent();
+        //System.out.println(this.agvModel.getContents(this));
+        if (!this.hasBattery) {
+            this.hasBattery = true;
+            pickupBattery(timeLapse);
             return;
         }
-        else if(target_low_battery.isPresent() && this.power>0){
-            this.target_low_battery = Optional.absent();
 
-        }
         if (!timeLapse.hasTimeLeft()) {
             return;
         }
-        if (!target.isPresent() && !target_low_battery.isPresent())
+        if (!target.isPresent())
             this.nextDestination();
 
-        if(target.isPresent()) {
-
-            if (!this.agvModel.containerContains(this, target.get()) &&
-                    this.getRoadModel().getPosition(this).equals(target.get().getPickupLocation())) {
-                pickup(this.getRoadModel().getPosition(this), timeLapse);
-            } else if (this.agvModel.containerContains(this, target.get()) &&
-                    this.getRoadModel().getPosition(this).equals(target.get().getDeliveryLocation())) {
-                //getPDPModel().deliver(this, target.get(), timeLapse);
-                this.agvModel.store_box(this, target.get(), timeLapse,rng);
-                target = Optional.absent();
-                Set<RoadUser> users = this.getRoadModel().getObjects();
-                users.size();
-            } else if (this.agvModel.containerContains(this, target.get())) {
-                move(timeLapse,target);
-            } else {
-                if (getRoadModel().containsObject(target.get())) {
-                    move(timeLapse,target);
-                } else {
+        if (target.isPresent()) {
+            if(is_delivering_box()) {
+                if (!has_delivering_box()) {
+                    if (!is_in_pick_destination()) {
+                        moveBox(timeLapse);
+                    } else {
+                        pickupBox(timeLapse);
+                    }
+                } else if (is_in_delivery_destination()) {
+                    this.agvModel.store_box(this,(Box) target.get(), timeLapse, rng);
                     target = Optional.absent();
+                } else {
+                    moveBox(timeLapse);
                 }
             }
-        }
-        else if(target_low_battery.isPresent()) {
-            move(timeLapse,target_low_battery);
-            if(this.getRoadModel().getPosition(this).equals(target_low_battery.get().position)){
-                this.power=POWERLIMIT;
-            }
+            else if(!is_in_charger_delivery_destination()) {
+                moveBattery(timeLapse);
+            }else if(has_delivering_battery()){
+                dropBattery((Battery) target.get(),timeLapse);
 
+            }else{
+                updateBattery(timeLapse);
+                target = Optional.absent();
+            }
         }
+    }
+
+    public void dropBattery(Battery battery, TimeLapse timeLapse) {
+        this.agvModel.drop(this, battery, timeLapse);
+    }
+    public void updateBattery(TimeLapse timeLapse){
+        Point position = this.getRoadModel().getPosition(this);
+        Battery newbattery = new Battery(position);
+        this.agvModel.registerBattery(newbattery);
+        this.agvModel.pickup(this, newbattery, timeLapse);
+    }
+
+    public boolean is_in_charger_delivery_destination(){
+        Battery battery = (Battery) this.target.get();
+        return this.getRoadModel().getPosition(this).equals(battery.destination);
+    }
+    public boolean is_in_delivery_destination(){
+        return this.getRoadModel().getPosition(this).equals(target.get().getDeliveryLocation());
+    }
+
+    public boolean is_in_pick_destination(){
+        return this.getRoadModel().getPosition(this).equals(target.get().getPickupLocation());
+    }
+
+    public boolean is_delivering_box(){
+        if(this.target.get().getDeliveryDuration()==CHARGING_DURATION){
+            return false;
+        }
+        return true;
+    }
+
+    public boolean has_delivering_box(){
+        return this.agvModel.containerContains(this, target.get());
+    }
+
+    public boolean has_delivering_battery(){
+        return this.agvModel.containerContains(this, target.get());
     }
 
     @Override
     public void afterTick(TimeLapse timeLapse) {
     }
 
+    public Battery getBattery() {
+        Battery battery = null;
+        ArrayList<Parcel> contents = new ArrayList(this.agvModel.getContents(this));
+        if (contents.size() >= 1) {
+            battery = (Battery) contents.get(0);
+        }
+        return battery;
+    }
 }
