@@ -19,10 +19,12 @@ import com.google.auto.value.AutoValue;
 
 import java.util.*;
 
+import static DelgMas.AgvExample.TICK_LENGTH;
+
 public class DMASModel implements TickListener, Model<Point> {
 
-    private static final int ANT_A_FREQUENCY = 15000;
-    private static final int ANT_B_FREQUENCY = 15000;
+    private static final long ANT_A_FREQUENCY = 40* TICK_LENGTH;
+    private static final long ANT_B_FREQUENCY = 15 * TICK_LENGTH;
     private int clock_A;
     private int clock_B;
     private RoadModel rm;
@@ -50,7 +52,6 @@ public class DMASModel implements TickListener, Model<Point> {
         for(PheromoneStorage pheroStore: nodes){
             pheroStore.accept(antA);
         }
-        antA=null;
     }
 
     public int releaseAnts_B(Queue<Point> path, TimeWindow tw){

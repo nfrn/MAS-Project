@@ -4,13 +4,14 @@ import VisitorClasses.Ants.Ant;
 import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
-import VisitorClasses.Pheromones.Pheromone;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import VisitorClasses.Visitable;
 import com.github.rinde.rinsim.geom.Point;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class PheromoneStorage implements Visitable {
 
@@ -31,15 +32,29 @@ public class PheromoneStorage implements Visitable {
         list_phero_C = new ArrayList<Pheromone_C>();
     }
 
-    public void time_passed(){
-        for(Pheromone_A pheA : this.list_phero_A){
-            pheA.decreaseLifeTime();
-        }
-        for(Pheromone_B pheB : this.list_phero_B){
-            pheB.decreaseLifeTime();
-        }
-        for(Pheromone_C pheC : this.list_phero_C){
-            pheC.decreaseLifeTime();
+    public void time_passed() {
+        Iterator<Pheromone_A> iter = list_phero_A.iterator();
+        while (iter.hasNext()) {
+            Pheromone_A pheA = iter.next();
+
+            if (pheA.lifetime < 0) {
+                iter.remove();
+            }
+            Iterator<Pheromone_B> iter2 = list_phero_B.iterator();
+            while (iter2.hasNext()) {
+                Pheromone_B pheB = iter2.next();
+
+                if (pheB.lifetime < 0) {
+                    iter2.remove();
+                }
+            }
+            Iterator<Pheromone_C> iter3 = list_phero_C.iterator();
+            while (iter3.hasNext()) {
+                Pheromone_C pheC = iter3.next();
+                if (pheC.lifetime < 0) {
+                    iter3.remove();
+                }
+            }
         }
     }
 

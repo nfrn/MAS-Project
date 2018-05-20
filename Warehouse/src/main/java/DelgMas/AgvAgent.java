@@ -106,10 +106,11 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         //First task is every agent to load the battery they have.
         //Battery battery = getBattery();
 
-        //System.out.println(this.agvModel.getContents(this));
+        //System.out.println(getRoadModel().getObjectsOfType(Box.class).size());
         if (!this.hasBattery) {
             this.hasBattery = true;
             pickupBattery(timeLapse);
+            System.out.println("Battery added");
             return;
         }
 
@@ -120,34 +121,43 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.nextDestination();
 
         if (target.isPresent()) {
-            if(is_delivering_box()) {
-                if (!has_delivering_box()) {
-                    if (!is_in_pick_destination()) {
+            if (is_delivering_box()) {
+                if (!has_delivering_box() && is_in_pick_destination()) {
+                    pickupBox(timeLapse);
+                } else if (has_delivering_box() && is_in_delivery_destination()) {
+                    this.agvModel.store_box(this, (Box) target.get(), timeLapse, rng);
+                    target = Optional.absent();
+                } else if (this.agvModel.containerContains(this, target.get())) {
+                    moveBox(timeLapse);
+                } else {
+                    if (getRoadModel().containsObject(target.get())) {
                         moveBox(timeLapse);
                     } else {
-                        pickupBox(timeLapse);
+                        target = Optional.absent();
                     }
-                } else if (is_in_delivery_destination()) {
-                    this.agvModel.store_box(this,(Box) target.get(), timeLapse, rng);
-                    target = Optional.absent();
-                } else {
-                    moveBox(timeLapse);
                 }
-            }
-            else if(!is_in_charger_delivery_destination()) {
-                moveBattery(timeLapse);
-            }else if(has_delivering_battery()){
-                dropBattery((Battery) target.get(),timeLapse);
-
-            }else{
-                updateBattery(timeLapse);
-                target = Optional.absent();
+            } else {
+                if(has_delivering_battery() && is_in_charger_delivery_destination()) {
+                    dropBattery((Battery) target.get(), timeLapse);
+                }else if(!has_delivering_battery() && is_in_charger_delivery_destination()){
+                    updateBattery(timeLapse);
+                    target = Optional.absent();
+                }else if (this.agvModel.containerContains(this, target.get())) {
+                    moveBattery(timeLapse);
+                } else {
+                    if (getRoadModel().containsObject(target.get())) {
+                        moveBattery(timeLapse);
+                    } else {
+                        target = Optional.absent();
+                    }
+                }
             }
         }
     }
 
     public void dropBattery(Battery battery, TimeLapse timeLapse) {
         this.agvModel.drop(this, battery, timeLapse);
+        this.agvModel.unregister(battery);
     }
     public void updateBattery(TimeLapse timeLapse){
         Point position = this.getRoadModel().getPosition(this);

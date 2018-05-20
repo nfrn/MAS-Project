@@ -10,7 +10,7 @@ import static DelgMas.AgvExample.TICK_LENGTH;
 
 public class Box extends Parcel {
     private static final long  MAX_CAPACITY= 1;
-    public static final long SERVICE_DURATION = 10*TICK_LENGTH;
+    public static final long SERVICE_DURATION = 50*TICK_LENGTH;
     public static final long PICKUP_MAX_TIME = 300*TICK_LENGTH;
     public static final long DELIVER_MAX_TIME = 500*TICK_LENGTH;
     boolean finaldestination;
