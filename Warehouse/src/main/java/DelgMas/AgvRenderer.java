@@ -60,13 +60,15 @@ public class AgvRenderer extends CanvasRenderer.AbstractCanvasRenderer {
                 }
                 final String text = String.format("%.0f ", (double) power / agent.POWERLIMIT * 100) + "%";
                 if(roadModel.getObjectsOfType(Vehicle.class).size()!=NUM_AGVS){break;}
-                final Point pos = roadModel.getPosition(v);
-                final int x = viewPort.toCoordX(pos.x);
-                final int y = viewPort.toCoordY(pos.y);
-                final int textWidth = gc.textExtent(text).x;
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLUE));
-                gc.drawText(text, (int) LABEL_OFFSET.x + x - textWidth / 2,
-                        (int) LABEL_OFFSET.y + y, true);
+                try {
+                    final Point pos = roadModel.getPosition(v);
+                    final int x = viewPort.toCoordX(pos.x);
+                    final int y = viewPort.toCoordY(pos.y);
+                    final int textWidth = gc.textExtent(text).x;
+                    gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLUE));
+                    gc.drawText(text, (int) LABEL_OFFSET.x + x - textWidth / 2,
+                            (int) LABEL_OFFSET.y + y, true);
+                }catch (Exception e){continue;}
             }
         }
     }

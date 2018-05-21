@@ -1,5 +1,9 @@
 package DelgMas;
 
+import Ui.RoadDataPanel;
+import Ui.StringListener;
+import Ui.TaskListener;
+import Ui.TasksPanel;
 import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.SimulatorUser;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
@@ -15,11 +19,13 @@ import com.google.auto.value.AutoValue;
 import DelgMas.AutoValue_AgvModel_Builder;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import static DelgMas.AgvExample.NUM_AGVS;
 import static DelgMas.AgvExample.NUM_BOXES;
+import static DelgMas.Battery.CHARGING_DURATION;
 
 
 public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadUser {
@@ -27,34 +33,28 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
     private List<Point> depot_locations;
     private SimulatorAPI simulator;
     private RoadModel roadModel;
+    public TaskListener taskListener;
 
     protected AgvModel(PDPModel deleg) {
         super(deleg);
         depot_locations = new ArrayList<>();
         for (int i = 0; i < AgvExample.NUM_DEPOTS; ++i)
             depot_locations.add(new Point(76, i * 12));
+        createUi(this);
     }
 
-    @Override
-    public TimeWindowPolicy getTimeWindowPolicy(){
-        return TimeWindowPolicy.TimeWindowPolicies.STRICT;
-    }
     static Builder builder() {
         return Builder.create();
     }
 
     void store_box(AgvAgent agv, Box box, TimeLapse timeLapse, RandomGenerator rng) {
         Point loc = box.getDeliveryLocation();
-        System.out.println(getRoadModel().getObjectsOfType(Box.class));
         this.deliver(agv, box, timeLapse);
+        this.unregister(box);
         if (box.finaldestination) {
-            System.out.println("Drop for ever");
-            System.out.println(getRoadModel().getObjectsOfType(Box.class));
             return;
         } else if (roadModel.getObjectsOfType(Parcel.class).size() <=NUM_BOXES+NUM_AGVS) {
             long currentTime = timeLapse.getTime();
-            System.out.println("Drop for a bit");
-            System.out.println(getRoadModel().getObjectsOfType(Box.class));
             simulator.register(new Box(loc,
                     depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime , true));
         }
@@ -97,4 +97,36 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         }
     }
 
+
+    public void createUi(final AgvModel agvModel){
+        getBoxes();
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+
+                TasksPanel panel = new TasksPanel(agvModel, agvModel.getBoxes() );
+                panel.setVisible(true);
+            }
+        });
+    }
+
+    public void setTaskListener(TaskListener taskListener){
+        this.taskListener=taskListener;
+    }
+
+    public synchronized ArrayList<Box> getBoxes(){
+        ArrayList<Box> output = new ArrayList<Box>();
+        for(Parcel parcel: this.getParcels(ParcelState.values())){
+            if(parcel.getDeliveryDuration()!=CHARGING_DURATION){
+                output.add((Box) parcel);
+            }
+        }
+        return output;
+    }
 }

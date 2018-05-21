@@ -9,7 +9,9 @@ import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 
@@ -48,7 +50,8 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     }
 
-    void nextDestination() {
+
+    void nextDestination(TimeLapse timeLapse) {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
             if (getBattery().capacity > 20) {
                 Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
@@ -60,16 +63,18 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
                 battery.destination = batteryCharger.position;
+
+                battery.setTimewindow(timeLapse.getTime());
                 this.target = Optional.of((Parcel) battery);
             }
         }
     }
 
     void pickupBox(TimeLapse tm) {
-        System.out.println(getRoadModel().getObjectsOfType(Box.class));
-        System.out.println("Pick up");
+        //System.out.println(getRoadModel().getObjectsOfType(Box.class));
+        //System.out.println("Pick up");
         this.agvModel.pickup(this, target.get(), tm);
-        System.out.println(getRoadModel().getObjectsOfType(Box.class));
+        //System.out.println(getRoadModel().getObjectsOfType(Box.class));
 
     }
 
@@ -80,7 +85,16 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     void moveBattery(TimeLapse tm) {
         Battery battery = (Battery) this.target.get();
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
+        BatteryCharger charger = getBatteryCharger(battery.destination);
+
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
+
+        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
+        if(result==-1){
+            System.out.println("The path is already booked");
+        }
+        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+        charger.bookBatteryCharger(target.get().getDeliveryTimeWindow());
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }
@@ -95,6 +109,13 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
+
+        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
+        if(result==-1){
+            System.out.println("The path is already booked");
+        }
+        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }
@@ -113,7 +134,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if (!this.hasBattery) {
             this.hasBattery = true;
             pickupBattery(timeLapse);
-            System.out.println("Battery added");
+            //System.out.println("Battery added");
             return;
         }
 
@@ -121,7 +142,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             return;
         }
         if (!target.isPresent())
-            this.nextDestination();
+            this.nextDestination(timeLapse);
 
         if (target.isPresent()) {
             if (is_delivering_box()) {
@@ -207,5 +228,15 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
             battery = (Battery) contents.get(0);
         }
         return battery;
+    }
+    public BatteryCharger getBatteryCharger(Point position){
+        BatteryCharger charger = null;
+        Set<BatteryCharger> chargerers = this.getRoadModel().getObjectsOfType(BatteryCharger.class);
+        for(BatteryCharger charg: chargerers){
+            if(charg.position.equals(position)){
+                charger=charg;
+            }
+        }
+        return charger;
     }
 }

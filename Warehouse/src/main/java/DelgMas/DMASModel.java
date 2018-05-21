@@ -1,11 +1,10 @@
 package DelgMas;
 
-import VisitorClasses.Ants.Ant;
+import Ui.RoadDataPanel;
+import Ui.StringListener;
 import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
-import VisitorClasses.Visitable;
-import VisitorClasses.Visitor;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -17,20 +16,20 @@ import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
 
+import javax.swing.*;
 import java.util.*;
 
 import static DelgMas.AgvExample.TICK_LENGTH;
 
-public class DMASModel implements TickListener, Model<Point> {
+public class DMASModel implements TickListener, Model<Point>{
 
     private static final long ANT_A_FREQUENCY = 40* TICK_LENGTH;
-    private static final long ANT_B_FREQUENCY = 15 * TICK_LENGTH;
     private int clock_A;
-    private int clock_B;
     private RoadModel rm;
     private AgvModel am;
     private GraphRoadModel grm;
-    private ArrayList<PheromoneStorage> nodes;
+    private final ArrayList<PheromoneStorage> nodes;
+    private StringListener stringListener;
 
 
     public DMASModel(RoadModel roadModel, AgvModel agvModel, GraphRoadModel grm) {
@@ -38,11 +37,11 @@ public class DMASModel implements TickListener, Model<Point> {
         this.am = agvModel;
         this.grm = grm;
         this.clock_A = 0;
-        this.clock_B = 0;
         nodes = new ArrayList<PheromoneStorage>();
         for(Point p : grm.getGraph().getNodes()){
             this.nodes.add(new PheromoneStorage(p));
         }
+        createUi(this);
     }
 
     public void releaseAnts_A(){
@@ -94,11 +93,12 @@ public class DMASModel implements TickListener, Model<Point> {
     @Override
     public void tick(TimeLapse timeLapse) {
         this.clock_A += timeLapse.getTickLength();
-        this.clock_B += timeLapse.getTickLength();
 
         if(this.clock_A >= ANT_A_FREQUENCY) {
             this.clock_A=0;
             this.releaseAnts_A();
+            this.stringListener.inputEmitted(nodes);
+            am.taskListener.inputEmitted(am.getBoxes());
         }
 
         for(PheromoneStorage phestore : nodes){
@@ -106,6 +106,7 @@ public class DMASModel implements TickListener, Model<Point> {
         }
 
     }
+
 
     @AutoValue
     abstract static class Builder
@@ -127,7 +128,6 @@ public class DMASModel implements TickListener, Model<Point> {
 
     @Override
     public void afterTick(TimeLapse timeLapse) {
-
     }
 
     @Override
@@ -148,5 +148,25 @@ public class DMASModel implements TickListener, Model<Point> {
     @Override
     public <U> U get(Class<U> aClass) {
         return null;
+    }
+
+    public void createUi(final DMASModel dmasModel){
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                RoadDataPanel panel = new RoadDataPanel(dmasModel, nodes);
+                panel.setVisible(true);
+            }
+        });
+    }
+
+    public void setStringListener(StringListener stringListener){
+        this.stringListener=stringListener;
     }
 }

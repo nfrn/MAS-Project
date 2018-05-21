@@ -30,6 +30,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import javax.measure.quantity.Duration;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -42,8 +43,8 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 1;
-    public static final int NUM_BOXES = 2;
+    public static final int NUM_AGVS = 2;
+    public static final int NUM_BOXES = 12;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
@@ -59,15 +60,15 @@ public final class AgvExample {
     }
 
     public static void main(String[] args) {
+
         run(false);
     }
 
     public static void run(boolean testing) {
 
         Builder viewBuilder = View.builder().with(
-                WarehouseRenderer.builder().withMargin(2.0D)
-                        .withNodes())
-                .with(AGVRenderer.builder().withVehicleCoordinates().withDifferentColorsForVehicles())
+                WarehouseRenderer.builder().withMargin(2.0D))
+                .with(AGVRenderer.builder().withDifferentColorsForVehicles())
                 .with(AgvRenderer.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
@@ -146,8 +147,9 @@ public final class AgvExample {
                 for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
                     boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
                     boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
+
                     if(is_beg && !is_anything_there){
-                        System.out.println("Added in fountain");
+                        //System.out.println("Added in fountain");
                         sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
                                 storage_positions.get(rng.nextInt(storage_positions.size())),currentTime, false));
                     }

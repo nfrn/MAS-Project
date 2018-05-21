@@ -9,6 +9,7 @@ import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import VisitorClasses.Visitable;
 import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.util.TimeWindow;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,10 +21,10 @@ public class PheromoneStorage implements Visitable {
     public static final int LIFETIME_C=100;
 
 
-    ArrayList<Pheromone_A> list_phero_A;
-    ArrayList<Pheromone_B> list_phero_B;
-    ArrayList<Pheromone_C> list_phero_C;
-    Point position;
+    public ArrayList<Pheromone_A> list_phero_A;
+    public ArrayList<Pheromone_B> list_phero_B;
+    public ArrayList<Pheromone_C> list_phero_C;
+    public Point position;
 
     public PheromoneStorage(Point point){
         this.position=point;
@@ -79,4 +80,35 @@ public class PheromoneStorage implements Visitable {
         }
         return 0;
     }
+
+    public String getPheroAInfo(){
+        String output = "";
+        for(Pheromone_A phero : list_phero_A){
+            for(TimeWindow tw: phero.chargers_booking){
+                output = "[" + tw.begin() +"," + tw.end() + "]:";
+            }
+        }
+
+        return output;
+    }
+    public String getPheroBInfo(){
+        String output = "";
+        for(Pheromone_B phero : list_phero_B){
+            for(TimeWindow tw: phero.node_booking){
+                output = "[" + tw.begin() +"," + tw.end() + "]:";
+            }
+        }
+
+        return output;
+    }
+    public String getPheroCInfo(){
+        String output = "";
+        for(Pheromone_C phero : list_phero_C){
+            for(TimeWindow tw: phero.node_booking){
+                output = "[" + tw.begin() +"," + tw.end() + "]:";
+            }
+        }
+        return output;
+    }
+
 }
