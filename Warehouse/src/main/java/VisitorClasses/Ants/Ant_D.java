@@ -1,17 +1,24 @@
 package VisitorClasses.Ants;
 
 import DelgMas.AgvModel;
+import DelgMas.DMASModel;
+import DelgMas.PheromoneStorage;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
+import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 
-public class Ant_C extends Ant {
-    private TimeWindow timeWindow;
+import java.util.ArrayList;
+import java.util.Collection;
 
-    public Ant_C(AgvModel agvModel, TimeWindow tw) {
+public class Ant_D extends Ant {
+
+    DMASModel dmas;
+
+    public Ant_D(AgvModel agvModel, DMASModel dmasModel) {
         super(agvModel);
-        this.timeWindow = tw;
+        this.dmas=dmasModel;
     }
 
     @Override
@@ -21,12 +28,13 @@ public class Ant_C extends Ant {
 
     @Override
     public int dropPheromone(Pheromone_B pheromone) {
-        pheromone.node_booking.add(this.timeWindow);
         return 0;
     }
 
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
-        //System.out.println("Node: " + pheromone.position + " knows that it is booked:" + pheromone.node_booking);
+        Point position = pheromone.position;
+        Collection<Point> outgoingConnections = dmas.grm.getGraph().getOutgoingConnections(position);
+        pheromone.neighbors=new ArrayList<Point>(outgoingConnections);
     }
 }

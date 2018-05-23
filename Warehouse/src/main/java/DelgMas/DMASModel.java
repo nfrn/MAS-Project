@@ -5,6 +5,7 @@ import Ui.StringListener;
 import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
+import VisitorClasses.Ants.Ant_D;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -27,8 +28,8 @@ public class DMASModel implements TickListener, Model<Point>{
     private int clock_A;
     private RoadModel rm;
     private AgvModel am;
-    private GraphRoadModel grm;
-    private final ArrayList<PheromoneStorage> nodes;
+    public GraphRoadModel grm;
+    public final ArrayList<PheromoneStorage> nodes;
     private StringListener stringListener;
 
 
@@ -85,6 +86,16 @@ public class DMASModel implements TickListener, Model<Point>{
         antC=null;
     }
 
+    public void releaseAnts_D(){
+        //Go to Path and tell to book it
+        //System.out.println("Ants_C released");
+        for(PheromoneStorage pheroStore: nodes){
+            Ant_D antD = new Ant_D(am,this);
+            pheroStore.accept(antD);
+            antD=null;
+        }
+    }
+
 
     static DMASModel.Builder builder() {
         return new AutoValue_DMASModel_Builder();
@@ -97,6 +108,7 @@ public class DMASModel implements TickListener, Model<Point>{
         if(this.clock_A >= ANT_A_FREQUENCY) {
             this.clock_A=0;
             this.releaseAnts_A();
+            this.releaseAnts_D();
             this.stringListener.inputEmitted(nodes);
             am.taskListener.inputEmitted(am.getBoxes());
         }

@@ -55,6 +55,7 @@ public class RoadDataPanel extends JFrame implements EventListener {
         GridBagConstraints constraints = new GridBagConstraints();
         GridBagConstraints constraints2 = new GridBagConstraints();
         GridBagConstraints constraints3 = new GridBagConstraints();
+        GridBagConstraints constraints4 = new GridBagConstraints();
 
         constraints.anchor = GridBagConstraints.WEST;
         constraints.insets = new Insets(2, 2, 2, 2);
@@ -71,10 +72,16 @@ public class RoadDataPanel extends JFrame implements EventListener {
         constraints3.gridx = 2;
         constraints3.gridy = 0;
 
+        constraints4.anchor = GridBagConstraints.WEST;
+        constraints4.insets = new Insets(2, 2, 2, 2);
+        constraints4.gridx = 3;
+        constraints4.gridy = 0;
+
         for(PheromoneStorage store: this.store){
             constraints.gridy +=1;
             constraints2.gridy +=1;
             constraints3.gridy +=1;
+            constraints4.gridy +=1;
             infoPanel.add(new JLabel("Position"+ store.position),constraints);
 
             String output = store.getPheroAInfo();
@@ -86,7 +93,8 @@ public class RoadDataPanel extends JFrame implements EventListener {
             label1.setForeground(Color.RED);
 
             infoPanel.add(label1,constraints2);
-            String output2 = store.getPheroCInfo();
+
+            String output2 = store.getPheroBInfo();
             if(output2.equals("")){
                 output2 = "[            ]";
             }
@@ -95,6 +103,16 @@ public class RoadDataPanel extends JFrame implements EventListener {
             label2.setForeground(Color.BLACK);
 
             infoPanel.add(label2,constraints3);
+
+            String output3 = store.getPheroCInfo();
+            if(output3.equals("")){
+                output3 = "[            ]";
+            }
+
+            JLabel label3 = new JLabel("Node Neighbors:"+ output3);
+            label3.setForeground(Color.RED);
+
+            infoPanel.add(label3,constraints4);
         }
     }
 }

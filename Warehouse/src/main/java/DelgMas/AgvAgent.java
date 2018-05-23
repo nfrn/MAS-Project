@@ -6,15 +6,21 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModels;
+import com.github.rinde.rinsim.core.model.road.RoadPath;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
+import com.github.rinde.rinsim.geom.GeomHeuristic;
+import com.github.rinde.rinsim.geom.GeomHeuristics;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.measure.Measure;
+import javax.measure.quantity.Duration;
+import javax.measure.quantity.Velocity;
 import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
@@ -85,6 +91,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     void moveBattery(TimeLapse tm) {
         Battery battery = (Battery) this.target.get();
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
+
         BatteryCharger charger = getBatteryCharger(battery.destination);
 
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
@@ -108,6 +115,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
+
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
 
         int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
