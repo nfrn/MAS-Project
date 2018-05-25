@@ -100,11 +100,11 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
 
     public void createUi(final AgvModel agvModel){
         getBoxes();
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        try {
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override

@@ -43,7 +43,7 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 2;
+    public static final int NUM_AGVS = 1;
     public static final int NUM_BOXES = 12;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
@@ -67,7 +67,7 @@ public final class AgvExample {
     public static void run(boolean testing) {
 
         Builder viewBuilder = View.builder().with(
-                WarehouseRenderer.builder().withMargin(2.0D))
+                WarehouseRenderer.builder().withNodes().withMargin(2.0D))
                 .with(AGVRenderer.builder().withDifferentColorsForVehicles())
                 .with(AgvRenderer.builder())
                 .with(RoadUserRenderer.builder()
@@ -140,6 +140,7 @@ public final class AgvExample {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(TimeLapse time) {
+
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
 

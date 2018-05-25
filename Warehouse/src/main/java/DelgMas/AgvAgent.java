@@ -15,6 +15,9 @@ import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.measure.Measurable;
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
@@ -93,7 +96,7 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if(result==-1){
             System.out.println("The path is already booked");
         }
-        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+        //dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
         charger.bookBatteryCharger(target.get().getDeliveryTimeWindow());
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
@@ -114,7 +117,36 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if(result==-1){
             System.out.println("The path is already booked");
         }
-        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+        //Measurable m = getRoadModel().getDistanceOfPath(queue);
+        //long l = m.longValue(getRoadModel().getDistanceUnit());
+
+        List<TimeWindow> timeWindows = new ArrayList<>();
+        if(this.dmasModel.grm.getGraph().containsNode(shortestPathTo.get(0)))
+            timeWindows.add(TimeWindow.create(tm.getTime(), tm.getTime()+2000));
+
+        long addTime = 0;
+        for(int i = 0; i < queue.size()-1; i++) {
+            Point a = shortestPathTo.get(i);
+            Point b = shortestPathTo.get(i+1);
+            List<Point> p = new ArrayList<>();
+
+            p.add(a);
+            p.add(b);
+
+            double dist = Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+            //long l = (long) m.doubleValue(getRoadModel().getDistanceUnit());
+            long sp = (long) this.getSpeed();
+            double delta = dist / (sp*1000);
+            long time = (long) (delta * 3600 * AgvExample.TICK_LENGTH + addTime);
+
+            System.out.println(time);
+            System.out.println(addTime);
+
+            timeWindows.add(TimeWindow.create(time, time + 2000));
+            addTime += time;
+        }
+        //dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+        dmasModel.releaseAnts_C(queue, timeWindows);
 
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;

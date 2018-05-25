@@ -27,7 +27,7 @@ public class DMASModel implements TickListener, Model<Point>{
     private int clock_A;
     private RoadModel rm;
     private AgvModel am;
-    private GraphRoadModel grm;
+    public GraphRoadModel grm;
     private final ArrayList<PheromoneStorage> nodes;
     private StringListener stringListener;
 
@@ -71,18 +71,21 @@ public class DMASModel implements TickListener, Model<Point>{
         return 0;
     }
 
-    public void releaseAnts_C(Queue<Point> path, TimeWindow tw){
+    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws){
         //Go to Path and tell to book it
         //System.out.println("Ants_C released");
-        Ant_C antC = new Ant_C(am,tw);
+
+        int i = 0;
         for(Point pt : path) {
             for (PheromoneStorage pheroStore : nodes) {
                 if (pheroStore.position.equals(pt)){
+                    Ant_C antC = new Ant_C(am, tws.get(i));
                     pheroStore.accept(antC);
+                    i++;
+                    antC=null;
                 }
             }
         }
-        antC=null;
     }
 
 
@@ -151,11 +154,11 @@ public class DMASModel implements TickListener, Model<Point>{
     }
 
     public void createUi(final DMASModel dmasModel){
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+//        try {
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
