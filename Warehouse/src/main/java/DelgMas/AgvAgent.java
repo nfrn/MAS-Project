@@ -25,9 +25,9 @@ import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
 
-class AgvAgent extends Vehicle implements TickListener, RoadUser {
+public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final int POWERLIMIT = 500;
-    private static final double SPEED = 1;
+    public static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 0.1;
 
@@ -115,16 +115,20 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
-
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
+        Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest);
 
-        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
-        if(result==-1){
-            System.out.println("The path is already booked");
+        System.out.println(path);
+        for(Queue<Point> path2 : path){
+            //System.out.println(path2);
+            int result = dmasModel.releaseAnts_B(path.element(), target.get().getDeliveryTimeWindow());
+            if(result!=-1){
+                dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
+                this.getRoadModel().followPath(this, queue, tm);
+                break;
+            }
         }
-        dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
 
-        this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }
 

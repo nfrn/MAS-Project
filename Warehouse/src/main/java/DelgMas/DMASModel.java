@@ -18,6 +18,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
 
 import javax.swing.*;
+import java.text.Collator;
 import java.util.*;
 
 import static DelgMas.AgvExample.TICK_LENGTH;
@@ -25,11 +26,12 @@ import static DelgMas.AgvExample.TICK_LENGTH;
 public class DMASModel implements TickListener, Model<Point>{
 
     private static final long ANT_A_FREQUENCY = 40* TICK_LENGTH;
+    private static final long PATHS = 5;
     private int clock_A;
-    private RoadModel rm;
-    private AgvModel am;
+    public RoadModel rm;
+    public AgvModel am;
     public GraphRoadModel grm;
-    public final ArrayList<PheromoneStorage> nodes;
+    public final Map<Point,PheromoneStorage> nodes;
     private StringListener stringListener;
 
 
@@ -38,9 +40,9 @@ public class DMASModel implements TickListener, Model<Point>{
         this.am = agvModel;
         this.grm = grm;
         this.clock_A = 0;
-        nodes = new ArrayList<PheromoneStorage>();
+        nodes = new HashMap<Point,PheromoneStorage>();
         for(Point p : grm.getGraph().getNodes()){
-            this.nodes.add(new PheromoneStorage(p));
+            this.nodes.put(p,new PheromoneStorage(p,new ArrayList<Point>(grm.getGraph().getOutgoingConnections(p))));
         }
         createUi(this);
     }
@@ -49,7 +51,7 @@ public class DMASModel implements TickListener, Model<Point>{
         //Go to chargers and see their availabiliy. Register that in Pheromone_A
         //System.out.println("Ants_A released");
         Ant_A antA = new Ant_A(am);
-        for(PheromoneStorage pheroStore: nodes){
+        for(PheromoneStorage pheroStore: nodes.values()){
             pheroStore.accept(antA);
         }
     }
@@ -59,7 +61,7 @@ public class DMASModel implements TickListener, Model<Point>{
         //System.out.println("Ants_B released");
         Ant_B antB = new Ant_B(am,tw);
         for(Point pt : path) {
-            for (PheromoneStorage pheroStore : nodes) {
+            for (PheromoneStorage pheroStore : nodes.values()) {
                 if (pheroStore.position.equals(pt)){
                     int result = pheroStore.accept(antB);
                     if(result==-1){
@@ -77,7 +79,7 @@ public class DMASModel implements TickListener, Model<Point>{
         //System.out.println("Ants_C released");
         Ant_C antC = new Ant_C(am,tw);
         for(Point pt : path) {
-            for (PheromoneStorage pheroStore : nodes) {
+            for (PheromoneStorage pheroStore : nodes.values()) {
                 if (pheroStore.position.equals(pt)){
                     pheroStore.accept(antC);
                 }
@@ -86,14 +88,28 @@ public class DMASModel implements TickListener, Model<Point>{
         antC=null;
     }
 
-    public void releaseAnts_D(){
-        //Go to Path and tell to book it
-        //System.out.println("Ants_C released");
-        for(PheromoneStorage pheroStore: nodes){
-            Ant_D antD = new Ant_D(am,this);
-            pheroStore.accept(antD);
-            antD=null;
+    public Queue<Queue<Point>> releaseAnts_D(Point orig, Point desti){
+
+        Queue<Queue<Point>> list = new LinkedList<Queue<Point>>();
+        for(int x = 0; x <PATHS; x++){
+            Ant_D antD = new Ant_D(am, this, orig, desti);
+            list.add(antD.getPath());
         }
+        Collections.sort((List<Queue<Point>>) list, new Comparator<Queue<Point>>() {
+            @Override
+            public int compare(Queue<Point> o1, Queue<Point> o2) {
+                if(o1.size() > o2.size()){
+                    return 1;
+                }
+                if(o1.size() < o2.size()){
+                    return -1;
+                }
+                else{
+                    return 0;
+                }
+            }
+        });
+        return list;
     }
 
 
@@ -108,12 +124,11 @@ public class DMASModel implements TickListener, Model<Point>{
         if(this.clock_A >= ANT_A_FREQUENCY) {
             this.clock_A=0;
             this.releaseAnts_A();
-            this.releaseAnts_D();
-            this.stringListener.inputEmitted(nodes);
+            this.stringListener.inputEmitted(new ArrayList<PheromoneStorage>(nodes.values()));
             am.taskListener.inputEmitted(am.getBoxes());
         }
 
-        for(PheromoneStorage phestore : nodes){
+        for(PheromoneStorage phestore : nodes.values()){
             phestore.time_passed();
         }
 
@@ -172,7 +187,7 @@ public class DMASModel implements TickListener, Model<Point>{
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                RoadDataPanel panel = new RoadDataPanel(dmasModel, nodes);
+                RoadDataPanel panel = new RoadDataPanel(dmasModel, new ArrayList<PheromoneStorage>(nodes.values()));
                 panel.setVisible(true);
             }
         });
