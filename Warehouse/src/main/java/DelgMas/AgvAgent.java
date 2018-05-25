@@ -114,8 +114,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
-        Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
+        //Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
 
+        /*
         System.out.println(path);
         for(Queue<Point> path2 : path){
             //System.out.println(path2);
@@ -129,7 +130,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 path.remove();
             }
         }
-        /**
+        */
 
 
         List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
@@ -144,14 +145,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         try {
             this.getRoadModel().followPath(this, queue, tm);
         } catch (DeadlockException e) {
-            for(PheromoneStorage phs : this.dmasModel.pheromoneStorageMap.values()) {
-                if(phs.position.equals(shortestPathTo.get(1))){
-                    System.out.println(phs.list_phero_B);
-                }
-            }
-            System.out.println("dead");
+            System.out.println("deadlock");
         }
-         */
+
         this.getBattery().capacity -= POWERCONSUME;
     }
 
