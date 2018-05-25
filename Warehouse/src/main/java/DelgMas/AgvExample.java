@@ -143,7 +143,7 @@ public final class AgvExample {
 
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
-
+                //System.out.println(currentTime);
 
                 for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
                     boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
@@ -227,7 +227,12 @@ public final class AgvExample {
                 Graphs.addBiPath(g, row.values());
             }
 
+
             Graphs.addBiPath(g, centerMatrix.column(0).values());
+            Graphs.addBiPath(g, centerMatrix.column(2).values());
+            Graphs.addBiPath(g, centerMatrix.column(4).values());
+            Graphs.addBiPath(g, centerMatrix.column(5).values());
+            Graphs.addBiPath(g, centerMatrix.column(7).values());
             Graphs.addBiPath(g, centerMatrix.column(centerMatrix.columnKeySet().size() - 1).values());
             Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(1, 2), (Point) centerMatrix.get(0, 0)});
             Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(3, 2), (Point) centerMatrix.get(2, 0)});
@@ -242,6 +247,7 @@ public final class AgvExample {
                 Map<Integer, Point> column = (Map) var3.next();
                 Graphs.addBiPath(g, column.values());
             }
+
             Graphs.addBiPath(g, rightMatrix.row(0).values());
             Graphs.addBiPath(g, rightMatrix.row(3).values());
             Graphs.addBiPath(g, rightMatrix.row(6).values());

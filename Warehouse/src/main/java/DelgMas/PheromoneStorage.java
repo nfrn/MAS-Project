@@ -22,9 +22,11 @@ public class PheromoneStorage implements Visitable {
     public ArrayList<Pheromone_B> list_phero_B;
     public ArrayList<Pheromone_C> list_phero_C;
     public Point position;
+    public ArrayList<Point> neighbors;
 
-    public PheromoneStorage(Point point) {
+    public PheromoneStorage(Point point, ArrayList<Point> neighbors) {
         this.position = point;
+        this.neighbors = neighbors;
         list_phero_A = new ArrayList<Pheromone_A>();
         list_phero_B = new ArrayList<Pheromone_B>();
         list_phero_C = new ArrayList<Pheromone_C>();
@@ -143,13 +145,10 @@ public class PheromoneStorage implements Visitable {
 
         return output;
     }
-
-    public String getPheroCInfo() {
+    public String getNeighborsInfo(){
         String output = "";
-        for (Pheromone_C phero : list_phero_C) {
-            for (Point pt : phero.neighbors) {
-                output += "[" + pt.x + "," + pt.y + "]:";
-            }
+        for(Point pt: this.neighbors){
+                output += "[" + pt.x +"," + pt.y + "]:";
         }
         return output;
     }

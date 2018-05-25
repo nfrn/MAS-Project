@@ -16,19 +16,13 @@ import com.google.common.base.Optional;
 import jdk.nashorn.internal.objects.Global;
 import org.apache.commons.math3.random.RandomGenerator;
 
-import javax.measure.Measure;
-import javax.measure.quantity.Duration;
-import javax.measure.quantity.Velocity;
-import javax.measure.Measurable;
-import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
 import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
 
 public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final int POWERLIMIT = 500;
-    private static final double SPEED = 1;
+    public static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 0.1;
 
@@ -42,7 +36,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private Optional<Parcel> target;
     private Queue<Point> path;
 
-    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas, int id) {
+    public AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas, int id) {
         super(VehicleDTO.builder()
                 .capacity(CAPACITY)
                 .startPosition(startPosition)
@@ -50,7 +44,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 .build());
 
         ID = id;
-
         this.agvModel = agv;
         this.dmasModel = dmas;
         this.rng = r;
@@ -62,7 +55,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     }
 
 
-    void nextDestination(TimeLapse timeLapse) {
+    private void nextDestination(TimeLapse timeLapse) {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
             if (getBattery().capacity > 20) {
                 Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
@@ -81,7 +74,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
     }
 
-    void pickupBox(TimeLapse tm) {
+    private void pickupBox(TimeLapse tm) {
         //System.out.println(getRoadModel().getObjectsOfType(Box.class));
         //System.out.println("Pick up");
         this.agvModel.pickup(this, target.get(), tm);
@@ -89,11 +82,11 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     }
 
-    void pickupBattery(TimeLapse tm) {
+    private void pickupBattery(TimeLapse tm) {
         this.agvModel.pickup(this, RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), Battery.class), tm);
     }
 
-    void moveBattery(TimeLapse tm) {
+    private void moveBattery(TimeLapse tm) {
         Battery battery = (Battery) this.target.get();
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
 
@@ -106,13 +99,12 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if(result==-1){
             System.out.println("The path is already booked");
         }
-        //dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
         charger.bookBatteryCharger(target.get().getDeliveryTimeWindow());
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }
 
-    void moveBox(TimeLapse tm){
+    private void moveBox(TimeLapse tm){
         Point dest;
         if (this.agvModel.getContents(this).contains(target.get())) {
             dest = this.target.get().getDeliveryLocation();
@@ -121,8 +113,24 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
-
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
+        Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
+
+        System.out.println(path);
+        for(Queue<Point> path2 : path){
+            //System.out.println(path2);
+            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(path.element()), tm);
+            int result = dmasModel.releaseAnts_B(path.element(), tws, this.ID);
+            if(result!=-1){
+                dmasModel.releaseAnts_C(path.element(), tws, this.ID);
+                this.getRoadModel().followPath(this, path.element(), tm);
+                break;
+            } else {
+                path.remove();
+            }
+        }
+        /**
+
 
         List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
 
@@ -143,7 +151,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             }
             System.out.println("dead");
         }
-
+         */
         this.getBattery().capacity -= POWERCONSUME;
     }
 
@@ -238,7 +246,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
     }
 
-    public void dropBattery(Battery battery, TimeLapse timeLapse) {
+    private  void dropBattery(Battery battery, TimeLapse timeLapse) {
         this.agvModel.drop(this, battery, timeLapse);
         this.agvModel.unregister(battery);
     }

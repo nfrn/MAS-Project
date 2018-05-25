@@ -104,7 +104,7 @@ public class RoadDataPanel extends JFrame implements EventListener {
 
             infoPanel.add(label2,constraints3);
 
-            String output3 = store.getPheroCInfo();
+            String output3 = store.getNeighborsInfo();
             if(output3.equals("")){
                 output3 = "[            ]";
             }
