@@ -6,8 +6,10 @@ import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import VisitorClasses.Visitor;
 
+
 public class Ant implements Visitor {
     public AgvModel agv;
+
     public Ant(AgvModel agvModel){
         agv=agvModel;
     }

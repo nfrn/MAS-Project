@@ -11,10 +11,12 @@ import java.util.Queue;
 
 public class Ant_B extends Ant {
     private TimeWindow timeWindow;
+    private int agentID;
 
-    public Ant_B(AgvModel agvModel, TimeWindow tw) {
+    public Ant_B(AgvModel agvModel, TimeWindow tw, int agentID) {
         super(agvModel);
         this.timeWindow = tw;
+        this.agentID = agentID;
     }
 
     @Override
@@ -26,16 +28,25 @@ public class Ant_B extends Ant {
     public int dropPheromone(Pheromone_B pheromone) {
         long begin = this.timeWindow.begin();
         long end = this.timeWindow.end();
-        for(TimeWindow tw: pheromone.node_booking){
-            if (!(!tw.isAfterStart(end) || tw.isAfterEnd(begin))) {
+        TimeWindow tw = pheromone.node_booking;
+        //if (!(!tw.isAfterStart(end) || tw.isBeforeEnd(begin))) {
+        if (pheromone.getAgentID() != this.agentID)
+            if (tw.isIn(begin) || tw.isIn(end)) {
                 return -1;
             }
-        }
         return 0;
     }
 
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
 
+    }
+
+    public TimeWindow getTimeWindow() {
+        return timeWindow;
+    }
+
+    public int getAgentID() {
+        return agentID;
     }
 }

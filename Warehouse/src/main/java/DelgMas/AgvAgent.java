@@ -4,17 +4,21 @@ import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
-import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadModels;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.road.*;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
+import com.github.rinde.rinsim.geom.GeomHeuristic;
+import com.github.rinde.rinsim.geom.GeomHeuristics;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
+import jdk.nashorn.internal.objects.Global;
 import org.apache.commons.math3.random.RandomGenerator;
 
+import javax.measure.Measure;
+import javax.measure.quantity.Duration;
+import javax.measure.quantity.Velocity;
 import javax.measure.Measurable;
 import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
@@ -22,11 +26,13 @@ import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
 
-class AgvAgent extends Vehicle implements TickListener, RoadUser {
+public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final int POWERLIMIT = 500;
     private static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 0.1;
+
+    public int ID;
 
     private RandomGenerator rng;
     private AgvModel agvModel;
@@ -36,12 +42,14 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private Optional<Parcel> target;
     private Queue<Point> path;
 
-    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas) {
+    AgvAgent(Point startPosition, RandomGenerator r, AgvModel agv, DMASModel dmas, int id) {
         super(VehicleDTO.builder()
                 .capacity(CAPACITY)
                 .startPosition(startPosition)
                 .speed(SPEED)
                 .build());
+
+        ID = id;
 
         this.agvModel = agv;
         this.dmasModel = dmas;
@@ -88,11 +96,13 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
     void moveBattery(TimeLapse tm) {
         Battery battery = (Battery) this.target.get();
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
+
         BatteryCharger charger = getBatteryCharger(battery.destination);
 
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
 
-        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
+        List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
+        int result = dmasModel.releaseAnts_B(queue, tws, this.ID);
         if(result==-1){
             System.out.println("The path is already booked");
         }
@@ -111,45 +121,62 @@ class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
+
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
 
-        int result = dmasModel.releaseAnts_B(queue, target.get().getDeliveryTimeWindow());
+        List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
+
+        int result = dmasModel.releaseAnts_B(queue, tws, this.ID);
         if(result==-1){
             System.out.println("The path is already booked");
         }
-        //Measurable m = getRoadModel().getDistanceOfPath(queue);
-        //long l = m.longValue(getRoadModel().getDistanceUnit());
+
+        dmasModel.releaseAnts_C(queue, tws, this.ID);
+
+        try {
+            this.getRoadModel().followPath(this, queue, tm);
+        } catch (DeadlockException e) {
+            for(PheromoneStorage phs : this.dmasModel.pheromoneStorageMap.values()) {
+                if(phs.position.equals(shortestPathTo.get(1))){
+                    System.out.println(phs.list_phero_B);
+                }
+            }
+            System.out.println("dead");
+        }
+
+        this.getBattery().capacity -= POWERCONSUME;
+    }
+
+    private List<TimeWindow> getTimeWindowsForPath(List<Point> path, TimeLapse tm) {
+        long VISIT_TIME_LENGTH = 6000;
 
         List<TimeWindow> timeWindows = new ArrayList<>();
-        if(this.dmasModel.grm.getGraph().containsNode(shortestPathTo.get(0)))
-            timeWindows.add(TimeWindow.create(tm.getTime(), tm.getTime()+2000));
 
-        long addTime = 0;
-        for(int i = 0; i < queue.size()-1; i++) {
-            Point a = shortestPathTo.get(i);
-            Point b = shortestPathTo.get(i+1);
+        long addTime = tm.getTime();
+        if(this.dmasModel.grm.getGraph().containsNode(path.get(0)))
+            timeWindows.add(TimeWindow.create(addTime, addTime+VISIT_TIME_LENGTH));
+
+        for(int i = 0; i < path.size()-1; i++) {
+            Point a = path.get(i);
+            Point b = path.get(i+1);
             List<Point> p = new ArrayList<>();
 
             p.add(a);
             p.add(b);
 
             double dist = Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-            //long l = (long) m.doubleValue(getRoadModel().getDistanceUnit());
             long sp = (long) this.getSpeed();
             double delta = dist / (sp*1000);
             long time = (long) (delta * 3600 * AgvExample.TICK_LENGTH + addTime);
 
-            System.out.println(time);
-            System.out.println(addTime);
+            long timeA = (time - VISIT_TIME_LENGTH) < 0 ? 0 : (time - VISIT_TIME_LENGTH);
+            long timeB = time + VISIT_TIME_LENGTH;
 
-            timeWindows.add(TimeWindow.create(time, time + 2000));
+            timeWindows.add(TimeWindow.create(timeA, timeB));
             addTime += time;
         }
-        //dmasModel.releaseAnts_C(queue, target.get().getDeliveryTimeWindow());
-        dmasModel.releaseAnts_C(queue, timeWindows);
 
-        this.getRoadModel().followPath(this, queue, tm);
-        this.getBattery().capacity -= POWERCONSUME;
+        return timeWindows;
     }
 
     @Override

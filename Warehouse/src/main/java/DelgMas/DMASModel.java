@@ -5,6 +5,7 @@ import Ui.StringListener;
 import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
+import VisitorClasses.Ants.Ant_D;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -21,14 +22,15 @@ import java.util.*;
 
 import static DelgMas.AgvExample.TICK_LENGTH;
 
-public class DMASModel implements TickListener, Model<Point>{
+public class DMASModel implements TickListener, Model<Point> {
 
-    private static final long ANT_A_FREQUENCY = 40* TICK_LENGTH;
+    private static final long ANT_A_FREQUENCY = 40 * TICK_LENGTH;
     private int clock_A;
     private RoadModel rm;
     private AgvModel am;
     public GraphRoadModel grm;
-    private final ArrayList<PheromoneStorage> nodes;
+    public final ArrayList<PheromoneStorage> nodes;
+    public final HashMap<Point, PheromoneStorage> pheromoneStorageMap;
     private StringListener stringListener;
 
 
@@ -38,53 +40,66 @@ public class DMASModel implements TickListener, Model<Point>{
         this.grm = grm;
         this.clock_A = 0;
         nodes = new ArrayList<PheromoneStorage>();
-        for(Point p : grm.getGraph().getNodes()){
-            this.nodes.add(new PheromoneStorage(p));
+        pheromoneStorageMap = new HashMap<>();
+        for (Point p : grm.getGraph().getNodes()) {
+            PheromoneStorage ph = new PheromoneStorage(p);
+            this.nodes.add(ph);
+            this.pheromoneStorageMap.put(p, ph);
         }
         createUi(this);
     }
 
-    public void releaseAnts_A(){
+    public void releaseAnts_A() {
         //Go to chargers and see their availabiliy. Register that in Pheromone_A
         //System.out.println("Ants_A released");
         Ant_A antA = new Ant_A(am);
-        for(PheromoneStorage pheroStore: nodes){
+        for (PheromoneStorage pheroStore : nodes) {
             pheroStore.accept(antA);
         }
     }
 
-    public int releaseAnts_B(Queue<Point> path, TimeWindow tw){
+    public int releaseAnts_B(Queue<Point> path, List<TimeWindow> tws, int agentID) {
         //Go to Path and check if it is free
         //System.out.println("Ants_B released");
-        Ant_B antB = new Ant_B(am,tw);
-        for(Point pt : path) {
-            for (PheromoneStorage pheroStore : nodes) {
-                if (pheroStore.position.equals(pt)){
-                    int result = pheroStore.accept(antB);
-                    if(result==-1){
-                        return -1;
-                    }
+        int i = 0;
+        for (Point pt : path) {
+            PheromoneStorage pheroStore = pheromoneStorageMap.get(pt);
+            if (pheroStore != null) {
+                Ant_B antB = new Ant_B(am, tws.get(i), agentID);
+                int result = pheroStore.accept(antB);
+                if (result == -1) {
+                    return -1;
                 }
+                i++;
+                antB = null;
             }
         }
-        antB=null;
         return 0;
     }
 
-    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws){
+    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws, int agentID) {
         //Go to Path and tell to book it
         //System.out.println("Ants_C released");
 
         int i = 0;
-        for(Point pt : path) {
-            for (PheromoneStorage pheroStore : nodes) {
-                if (pheroStore.position.equals(pt)){
-                    Ant_C antC = new Ant_C(am, tws.get(i));
-                    pheroStore.accept(antC);
-                    i++;
-                    antC=null;
-                }
+        for (Point pt : path) {
+            PheromoneStorage pheroStore = pheromoneStorageMap.get(pt);
+            if (pheroStore != null) {
+                Ant_C antC = new Ant_C(am, tws.get(i), agentID);
+                pheroStore.accept(antC);
+                i++;
+                antC = null;
             }
+        }
+    }
+
+    public void releaseAnts_D() {
+        //Go to Path and tell to book it
+        //System.out.println("Ants_C released");
+        for (PheromoneStorage pheroStore : nodes) {
+            Ant_D antD = new Ant_D(am, this);
+            pheroStore.accept(antD);
+            antD = null;
         }
     }
 
@@ -97,14 +112,15 @@ public class DMASModel implements TickListener, Model<Point>{
     public void tick(TimeLapse timeLapse) {
         this.clock_A += timeLapse.getTickLength();
 
-        if(this.clock_A >= ANT_A_FREQUENCY) {
-            this.clock_A=0;
+        if (this.clock_A >= ANT_A_FREQUENCY) {
+            this.clock_A = 0;
             this.releaseAnts_A();
+            this.releaseAnts_D();
             this.stringListener.inputEmitted(nodes);
             am.taskListener.inputEmitted(am.getBoxes());
         }
 
-        for(PheromoneStorage phestore : nodes){
+        for (PheromoneStorage phestore : nodes) {
             phestore.time_passed();
         }
 
@@ -153,7 +169,7 @@ public class DMASModel implements TickListener, Model<Point>{
         return null;
     }
 
-    public void createUi(final DMASModel dmasModel){
+    public void createUi(final DMASModel dmasModel) {
 //        try {
 //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //        } catch (Exception ex) {
@@ -169,7 +185,7 @@ public class DMASModel implements TickListener, Model<Point>{
         });
     }
 
-    public void setStringListener(StringListener stringListener){
-        this.stringListener=stringListener;
+    public void setStringListener(StringListener stringListener) {
+        this.stringListener = stringListener;
     }
 }

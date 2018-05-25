@@ -43,7 +43,7 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 1;
+    public static final int NUM_AGVS = 3;
     public static final int NUM_BOXES = 12;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
@@ -133,7 +133,7 @@ public final class AgvExample {
 
         for (int i = 0; i < NUM_AGVS; ++i) {
             Point position = roadModel.getRandomPosition(rng);
-            sim.register(new AgvAgent(position, rng, agvModel,dmasModel));
+            sim.register(new AgvAgent(position, rng, agvModel,dmasModel, i));
             sim.register(new Battery(position));
         }
 
