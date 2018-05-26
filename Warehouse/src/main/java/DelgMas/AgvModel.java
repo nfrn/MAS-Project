@@ -21,7 +21,9 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static DelgMas.AgvExample.NUM_AGVS;
 import static DelgMas.AgvExample.NUM_BOXES;
@@ -53,19 +55,32 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         this.unregister(box);
         if (box.finaldestination) {
             return;
-        } else if (roadModel.getObjectsOfType(Parcel.class).size() <=NUM_BOXES+NUM_AGVS) {
+        } else {//if (roadModel.getObjectsOfType(Parcel.class).size() <= NUM_BOXES + NUM_AGVS) {
             long currentTime = timeLapse.getTime();
-            simulator.register(new Box(loc,
-                    depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime , true));
+            Box newBox = new Box(loc,
+                    depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime, true, rng.nextInt(Box.MAX_STORAGE_TIME));
+            //newBox.
+            simulator.register(newBox);
         }
     }
 
-    public void registerBattery(Battery battery){
+    public void registerBattery(Battery battery) {
         this.simulator.register(battery);
     }
 
     public RoadModel getRoadModel() {
         return roadModel;
+    }
+
+    public List<Box> getAvailableBoxes() {
+        List<Box> boxes = new ArrayList<>(this.roadModel.getObjectsOfType(Box.class));
+        List<Box> availableBoxes = new ArrayList<>();
+        for (Box b : boxes) {
+            if (b.isAvailable)
+                availableBoxes.add(b);
+        }
+
+        return availableBoxes;
     }
 
     @Override
@@ -98,7 +113,7 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
     }
 
 
-    public void createUi(final AgvModel agvModel){
+    public void createUi(final AgvModel agvModel) {
         getBoxes();
 //        try {
 //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -110,20 +125,20 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
             @Override
             public void run() {
 
-                TasksPanel panel = new TasksPanel(agvModel, agvModel.getBoxes() );
+                TasksPanel panel = new TasksPanel(agvModel, agvModel.getBoxes());
                 panel.setVisible(true);
             }
         });
     }
 
-    public void setTaskListener(TaskListener taskListener){
-        this.taskListener=taskListener;
+    public void setTaskListener(TaskListener taskListener) {
+        this.taskListener = taskListener;
     }
 
-    public synchronized ArrayList<Box> getBoxes(){
+    public synchronized ArrayList<Box> getBoxes() {
         ArrayList<Box> output = new ArrayList<Box>();
-        for(Parcel parcel: this.getParcels(ParcelState.values())){
-            if(parcel.getDeliveryDuration()!=CHARGING_DURATION){
+        for (Parcel parcel : this.getParcels(ParcelState.values())) {
+            if (parcel.getDeliveryDuration() != CHARGING_DURATION) {
                 output.add((Box) parcel);
             }
         }

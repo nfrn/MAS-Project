@@ -43,7 +43,7 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 3;
+    public static final int NUM_AGVS = 1;
     public static final int NUM_BOXES = 12;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
@@ -70,6 +70,7 @@ public final class AgvExample {
                 WarehouseRenderer.builder().withNodes().withMargin(2.0D))
                 .with(AGVRenderer.builder().withDifferentColorsForVehicles())
                 .with(AgvRenderer.builder())
+                .with(BoxRender.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Box.class, "/graphics/perspective/deliverypackage3.png")

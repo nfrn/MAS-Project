@@ -7,13 +7,9 @@ import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.*;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.core.model.time.TimeModel;
-import com.github.rinde.rinsim.geom.GeomHeuristic;
-import com.github.rinde.rinsim.geom.GeomHeuristics;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
-import jdk.nashorn.internal.objects.Global;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import java.util.*;
@@ -58,11 +54,20 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private void nextDestination(TimeLapse timeLapse) {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
             if (getBattery().capacity > 20) {
-                Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
-                Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
-                        this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
+                List<Box> boxes = this.agvModel.getAvailableBoxes();
+                int closestBox = 0;
+
+                Box box = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), boxes);
+
+                Optional<Box> curr = Optional.fromNullable(box);
+
                 if (curr.isPresent())
                     this.target = Optional.of((Parcel) curr.get());
+//                Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
+//                Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
+//                        this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
+//                if (curr.isPresent())
+//                    this.target = Optional.of((Parcel) curr.get());
             } else {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
