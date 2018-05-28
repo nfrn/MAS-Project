@@ -67,6 +67,8 @@ public class Ant_D extends Ant {
                 if (distance2 <= distance1*1.05) {
                     break;
                 }
+                if (Math.random() < 0.4)
+                    break;
             }
             solution.add(nextPoint);
             current = nextPoint;

@@ -118,46 +118,28 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
-        Queue<Point> queue = new LinkedList<>(shortestPathTo);
-        //Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
 
-        /*
-        System.out.println(path);
+        Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
+
         for(Queue<Point> path2 : path){
-            //System.out.println(path2);
-            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(path.element()), tm);
-            int result = dmasModel.releaseAnts_B(path.element(), tws, this.ID);
+            Queue<Point> queue = new LinkedList<>();
+            queue.add(this.getRoadModel().getPosition(this));
+            queue.add(shortestPathTo.get(1));
+            queue.addAll(path2);
+            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
+            int result = dmasModel.releaseAnts_B(queue, tws, this.ID);
             if(result!=-1){
                 dmasModel.releaseAnts_C(path.element(), tws, this.ID);
-                this.getRoadModel().followPath(this, path.element(), tm);
+                this.getRoadModel().followPath(this, queue, tm);
                 break;
-            } else {
-                path.remove();
             }
-        }
-        */
-
-
-        List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
-
-        int result = dmasModel.releaseAnts_B(queue, tws, this.ID);
-        if(result==-1){
-            System.out.println("The path is already booked");
-        }
-
-        dmasModel.releaseAnts_C(queue, tws, this.ID);
-
-        try {
-            this.getRoadModel().followPath(this, queue, tm);
-        } catch (DeadlockException e) {
-            System.out.println("deadlock");
         }
 
         this.getBattery().capacity -= POWERCONSUME;
     }
 
     private List<TimeWindow> getTimeWindowsForPath(List<Point> path, TimeLapse tm) {
-        long VISIT_TIME_LENGTH = 6000;
+        long VISIT_TIME_LENGTH = 7000;
 
         List<TimeWindow> timeWindows = new ArrayList<>();
 
@@ -181,8 +163,12 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             long timeA = (time - VISIT_TIME_LENGTH) < 0 ? 0 : (time - VISIT_TIME_LENGTH);
             long timeB = time + VISIT_TIME_LENGTH;
 
-            timeWindows.add(TimeWindow.create(timeA, timeB));
-            addTime += time;
+            try {
+                timeWindows.add(TimeWindow.create(timeA, timeB));
+            } catch (Exception e) {
+                System.out.println();
+            }
+            addTime = time;
         }
 
         return timeWindows;
