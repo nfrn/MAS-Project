@@ -139,7 +139,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     }
 
     private List<TimeWindow> getTimeWindowsForPath(List<Point> path, TimeLapse tm) {
-        long VISIT_TIME_LENGTH = 7000;
+        long VISIT_TIME_LENGTH = 6000;
 
         List<TimeWindow> timeWindows = new ArrayList<>();
 
@@ -163,11 +163,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             long timeA = (time - VISIT_TIME_LENGTH) < 0 ? 0 : (time - VISIT_TIME_LENGTH);
             long timeB = time + VISIT_TIME_LENGTH;
 
-            try {
-                timeWindows.add(TimeWindow.create(timeA, timeB));
-            } catch (Exception e) {
-                System.out.println();
-            }
+            timeWindows.add(TimeWindow.create(timeA, timeB));
             addTime = time;
         }
 
