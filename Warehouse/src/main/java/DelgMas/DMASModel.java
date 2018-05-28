@@ -91,27 +91,11 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public Queue<Queue<Point>> releaseAnts_D(Point orig, Point desti) {
+    public Queue<Point> releaseAnts_D(Point orig, Point desti) {
 
-        Queue<Queue<Point>> list = new LinkedList<Queue<Point>>();
-        for (int x = 0; x < PATHS; x++) {
-            Ant_D antD = new Ant_D(am, this, orig, desti);
-            list.add(antD.getPath());
-        }
-        Collections.sort((List<Queue<Point>>) list, new Comparator<Queue<Point>>() {
-            @Override
-            public int compare(Queue<Point> o1, Queue<Point> o2) {
-                if (o1.size() > o2.size()) {
-                    return 1;
-                }
-                if (o1.size() < o2.size()) {
-                    return -1;
-                } else {
-                    return 0;
-                }
-            }
-        });
-        return list;
+        Ant_D antD = new Ant_D(am, this, orig, desti);
+        return antD.getPath();
+
     }
 
 

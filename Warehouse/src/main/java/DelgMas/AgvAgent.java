@@ -96,7 +96,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
 
         BatteryCharger charger = getBatteryCharger(battery.destination);
-
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
 
         List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
@@ -119,23 +118,19 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
-
-        Queue<Queue<Point>> path = dmasModel.releaseAnts_D(shortestPathTo.get(1), dest); // TODO Why you tkae here element 1 and not 0?
-
-        for(Queue<Point> path2 : path){
-            Queue<Point> queue = new LinkedList<>();
+        int result=-1;
+        List<TimeWindow> tws = new ArrayList<>();
+        Queue<Point> queue =  new LinkedList<>();
+        while(result==-1){
+            queue = new LinkedList<>();
             queue.add(this.getRoadModel().getPosition(this));
             queue.add(shortestPathTo.get(1));
-            queue.addAll(path2);
-            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
-            int result = dmasModel.releaseAnts_B(queue, tws, this.ID);
-            if(result!=-1){
-                dmasModel.releaseAnts_C(path.element(), tws, this.ID);
-                this.getRoadModel().followPath(this, queue, tm);
-                break;
-            }
+            queue.addAll(dmasModel.releaseAnts_D(shortestPathTo.get(1), dest));
+            tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
+            result = dmasModel.releaseAnts_B(queue, tws, this.ID);
         }
-
+        dmasModel.releaseAnts_C(queue, tws, this.ID);
+        this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }
 
