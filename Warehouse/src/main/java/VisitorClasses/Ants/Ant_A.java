@@ -7,6 +7,7 @@ import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.geom.Point;
 
 public class Ant_A extends Ant{
     public Ant_A(AgvModel agvModel) {
@@ -16,9 +17,20 @@ public class Ant_A extends Ant{
 
     @Override
     public void dropPheromone(Pheromone_A pheromone) {
-        BatteryCharger bc = RoadModels.findClosestObject(pheromone.position,agv.getRoadModel(),BatteryCharger.class);
-        pheromone.chargers_booking = bc.getBooked();
-        //System.out.println(pheromone.position + "knows that the closest charger is booked:" + pheromone.chargers_booking);
+        for(BatteryCharger batteryCharger: agv.getRoadModel().getObjectsOfType(BatteryCharger.class)){
+            if(agv.getRoadModel().getPosition(batteryCharger).equals(new Point(36,4))){
+                pheromone.chargers_booking1 = batteryCharger.getBooked();
+            }
+            else if(agv.getRoadModel().getPosition(batteryCharger).equals(new Point(40,4))){
+                pheromone.chargers_booking2 = batteryCharger.getBooked();
+            }
+            else if(agv.getRoadModel().getPosition(batteryCharger).equals(new Point(36,44))){
+                pheromone.chargers_booking3 = batteryCharger.getBooked();
+            }
+            else if(agv.getRoadModel().getPosition(batteryCharger).equals(new Point(40,44))){
+                pheromone.chargers_booking4 = batteryCharger.getBooked();
+            }
+        }
     }
 
     @Override
