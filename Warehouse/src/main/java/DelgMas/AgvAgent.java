@@ -104,7 +104,8 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if(result==-1){
             System.out.println("The path is already booked");
         }
-        charger.bookBatteryCharger(target.get().getDeliveryTimeWindow());
+        charger.bookBatteryCharger(TimeWindow.create(tws.get(tws.size()-1).begin(),tws.get(tws.size()-1).end() + battery.getDeliveryDuration()));
+
         this.getRoadModel().followPath(this, queue, tm);
         this.getBattery().capacity -= POWERCONSUME;
     }

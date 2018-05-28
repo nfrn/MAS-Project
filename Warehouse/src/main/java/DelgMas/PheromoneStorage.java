@@ -125,11 +125,22 @@ public class PheromoneStorage implements Visitable {
         return 0;
     }
 
+
+
     public String getPheroAInfo() {
         String output = "";
         for (Pheromone_A phero : list_phero_A) {
-            for (TimeWindow tw : phero.chargers_booking) {
-                output += "[" + tw.begin() + "," + tw.end() + "]:";
+            for (TimeWindow tw : phero.chargers_booking1) {
+                output += "Charger1[" + tw.begin() + "," + tw.end() + "]:";
+            }
+            for (TimeWindow tw : phero.chargers_booking2) {
+                output += "Charger2[" + tw.begin() + "," + tw.end() + "]:";
+            }
+            for (TimeWindow tw : phero.chargers_booking3) {
+                output += "Charger3[" + tw.begin() + "," + tw.end() + "]:";
+            }
+            for (TimeWindow tw : phero.chargers_booking4) {
+                output += "Charger4[" + tw.begin() + "," + tw.end() + "]:";
             }
         }
 
