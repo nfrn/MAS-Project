@@ -147,6 +147,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             interval++;
             if (i > 50) {
                 goSleep = true;
+                this.currentPath = Optional.absent();
                 break;
             }
         }
@@ -156,7 +157,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             TimeWindow lastTw = tws.get(tws.size() - 1);
             TimeWindow newTw = TimeWindow.create(lastTw.begin(), lastTw.end() + battery.getDeliveryDuration());
 
-            if(charger.checkBooking(newTw)) {
+            //if(charger.checkBooking(newTw)) {
                 tws.set(tws.size() - 1, newTw);
                 dmasModel.releaseAnts_C(queue, tws, this.ID, this);
                 this.currentPath = Optional.of(queue);
@@ -166,8 +167,8 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 this.getRoadModel().followPath(this, queue, tm);
                 this.getBattery().capacity -= POWERCONSUME;
                 return true;
-            } else
-                return false;
+            //} else
+            //    return false;
         } else {
             return false;
         }
@@ -229,6 +230,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 interval++;
                 if (i > 50) {
                     goSleep = true;
+                    this.currentPath = Optional.absent();
                     break;
                 }
             }
@@ -322,12 +324,12 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                     } else if (this.agvModel.containerContains(this, target.get())) {
                         boolean success = moveBox(timeLapse);
                         if (!success)
-                            this.sleep = 3;
+                            this.sleep = 20;
                     } else {
                         if (getRoadModel().containsObject(target.get())) {
                             boolean success = moveBox(timeLapse);
                             if (!success)
-                                this.sleep = 3;
+                                this.sleep = 20;
                         } else {
                             target = Optional.absent();
                         }
@@ -341,12 +343,12 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                     } else if (this.agvModel.containerContains(this, target.get())) {
                         boolean success = moveBattery(timeLapse);
                         if (!success)
-                            this.sleep = 3;
+                            this.sleep = 20;
                     } else {
                         if (getRoadModel().containsObject(target.get())) {
                             boolean success = moveBattery(timeLapse);
                             if (!success)
-                                this.sleep = 3;
+                                this.sleep = 20;
                         } else {
                             target = Optional.absent();
                         }
