@@ -13,9 +13,9 @@ import java.util.Iterator;
 
 public class PheromoneStorage implements Visitable {
 
-    public static final int LIFETIME_A = 100;
-    public static final int LIFETIME_B = 100;
-    public static final int LIFETIME_C = 100;
+    public static final int LIFETIME_A = 40;
+    public static final int LIFETIME_B = 40;
+    public static final int LIFETIME_C = 40;
 
 
     public ArrayList<Pheromone_A> list_phero_A;
@@ -111,13 +111,15 @@ public class PheromoneStorage implements Visitable {
                 list_phero_B.add(pheromone_B);
             }
 
-        } else if (ant.getClass() == Ant_D.class) {
-            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_C, position);
+        }
+        else if (ant.getClass() == Ant_Boxs_Info.class) {
+            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_A, position);
             ant.dropPheromone(pheromone_C);
             boolean isthere = false;
             for (Pheromone_C phC : list_phero_C) {
                 if (phC.position.equals(pheromone_C.position)) {
-                    phC.lifetime = LIFETIME_B;
+                    phC.boxes_info = new ArrayList<>(pheromone_C.boxes_info);
+                    phC.lifetime = LIFETIME_C;
                     isthere = true;
                     break;
                 }
@@ -126,7 +128,7 @@ public class PheromoneStorage implements Visitable {
                 list_phero_C.add(pheromone_C);
             }
         }
-        return 0;
+            return 0;
     }
 
 

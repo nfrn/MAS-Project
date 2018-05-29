@@ -13,6 +13,7 @@ import javax.measure.Measure;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.SI;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -46,23 +47,34 @@ public class Ant_D extends Ant {
 
     }
 
-    public Queue<Point> getPath() {
-        Queue<Point> solution;
-        Point nextPoint = origi;
+    public Queue<Point> getPath(int delay) {
+
         if(origi.equals(desti)){
-            solution = new LinkedList<>();
-            return solution;
+            return new LinkedList<>();
         }
-        double dist = Math.sqrt(Math.pow(origi.x - desti.x, 2) + Math.pow(origi.y - desti.y, 2));
+
+        int loops = agv.getRoadModel().getShortestPathTo(origi,desti).size();
+
+        Queue<Point> currSolution;
+        double currDist;
+        Point nextPoint = origi;
+
+
         do{
-            solution = new LinkedList();
+            currSolution = new LinkedList();
             nextPoint = origi;
             while (!nextPoint.equals(desti)) {
                 ArrayList<Point> roads = dmas.nodes.get(nextPoint).neighbors;
-                nextPoint = roads.get((int) (Math.random() * roads.size()));
-                solution.add(nextPoint);
+                nextPoint = roads.get((int) (Math.random() * (roads.size())));
+                currSolution.add(nextPoint);
+                if(currSolution.size()>loops+delay){
+                    currSolution = null;
+                    break;
+                }
             }
-        }while(agv.getRoadModel().getDistanceOfPath(solution).getValue() >= (dist*2));
-        return solution;
+        }while(currSolution==null);
+
+        System.out.println(currSolution.size()+ " vs:" + (agv.getRoadModel().getShortestPathTo(origi,desti).size()-1));
+        return currSolution;
     }
 }

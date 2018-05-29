@@ -17,6 +17,10 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.*;
+import com.github.rinde.rinsim.pdptw.common.StatsPanel;
+import com.github.rinde.rinsim.pdptw.common.StatsTracker;
+import com.github.rinde.rinsim.scenario.Scenario;
+import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.View.Builder;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
@@ -79,6 +83,7 @@ public final class AgvExample {
                         .withImageAssociation(
                                 BatteryCharger.class, "/graphics/flat/warehouse-32.png"))
                 .withTitleAppendix("AGV example")
+                //.with(StatsPanel.builder())
                 .withResolution(1300, 1000);
 
         final Simulator sim = Simulator.builder()
@@ -88,6 +93,9 @@ public final class AgvExample {
                 .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(AgvModel.builder())
                 .addModel(DMASModel.builder())
+                .addModel(ScenarioController.builder(Scenario.builder()
+                        .build()))
+                .addModel(StatsTracker.builder())
                 .addModel(viewBuilder)
                 .build();
         final RandomGenerator rng = sim.getRandomGenerator();

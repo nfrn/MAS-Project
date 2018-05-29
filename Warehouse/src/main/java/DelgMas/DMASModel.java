@@ -7,6 +7,7 @@ import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
 import VisitorClasses.Ants.Ant_D;
 import VisitorClasses.Pheromones.Pheromone_A;
+import VisitorClasses.Ants.*;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -51,6 +52,7 @@ public class DMASModel implements TickListener, Model<Point> {
             this.connections.put(c, new PheromoneConnectionStorage(c));
         }
 
+        this.releaseAnts_Boxs_Info();
         createUi(this);
     }
 
@@ -156,11 +158,19 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public Queue<Point> releaseAnts_D(Point orig, Point desti) {
+    public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay) {
 
         Ant_D antD = new Ant_D(am, this, orig, desti);
-        return antD.getPath();
+        return antD.getPath(delay);
 
+    }
+
+    public void releaseAnts_Boxs_Info() {
+
+        Ant_Boxs_Info ant_boxs_info = new Ant_Boxs_Info(am);
+        for (PheromoneStorage pheroStore : nodes.values()) {
+            pheroStore.accept(ant_boxs_info);
+        }
     }
 
     public PheromoneConnectionStorage getConnection(Point from, Point to) {
@@ -185,17 +195,20 @@ public class DMASModel implements TickListener, Model<Point> {
         return closestPoint;
     }
 
+
+
     static DMASModel.Builder builder() {
         return new AutoValue_DMASModel_Builder();
     }
 
     @Override
     public void tick(TimeLapse timeLapse) {
-        this.clock_A += timeLapse.getTickLength();
+        this.clock_A += timeLapse.getTime();
 
         if (this.clock_A >= ANT_A_FREQUENCY) {
             this.clock_A = 0;
             this.releaseAnts_A();
+            this.releaseAnts_Boxs_Info();
             this.stringListener.inputEmitted(new ArrayList<PheromoneStorage>(nodes.values()));
             am.taskListener.inputEmitted(am.getBoxes());
         }
