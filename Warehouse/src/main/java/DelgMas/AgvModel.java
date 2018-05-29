@@ -99,7 +99,7 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
 
         Builder() {
             setDependencies(RoadModel.class);
-            setProvidingTypes(AgvModel.class);
+            setProvidingTypes(AgvModel.class,PDPModel.class);
         }
 
         static Builder create() {

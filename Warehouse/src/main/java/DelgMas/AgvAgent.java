@@ -62,24 +62,38 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     }
 
+    private Box reasonAboutBoxes(Point position, long time, PheromoneStorage store){
+        ArrayList<Parcel> boxes_info = new ArrayList<>(store.list_phero_C.get(0).boxes_info);
+        boxes_info.sort(new Comparator<Parcel>() {
+            @Override
+            public int compare(Parcel b1, Parcel b2) {
+                double pickupdistance1 = Math.sqrt(Math.pow(b1.getPickupLocation().x - position.x, 2) + Math.pow(b1.getPickupLocation().y - position.y, 2));
+                double pickupdistance2 = Math.sqrt(Math.pow(b2.getPickupLocation().x - position.x, 2) + Math.pow(b2.getPickupLocation().y - position.y, 2));
+                double deliverydistance1 = Math.sqrt(Math.pow(b1.getDeliveryLocation().x - position.x, 2) + Math.pow(b1.getDeliveryLocation().y - position.y, 2));
+                double deliverydistance2 = Math.sqrt(Math.pow(b2.getDeliveryLocation().x - position.x, 2) + Math.pow(b2.getDeliveryLocation().y - position.y, 2));
+
+                double pickuptimeleft1 = b1.getPickupTimeWindow().end()-time;
+                double pickuptimeleft2 = b2.getPickupTimeWindow().end()-time;
+                double deliverytimeleft1 = b1.getDeliveryTimeWindow().end()-time;
+                double deliverytimeleft2 = b2.getDeliveryTimeWindow().end()-time;
+
+                return ((int)((pickupdistance1*pickuptimeleft1 + deliverydistance1*deliverytimeleft1)
+                        - (pickupdistance2*pickuptimeleft2 + deliverydistance2*deliverytimeleft2)));
+            }
+        });
+        return (Box) boxes_info.get(0);
+    }
 
     private void nextDestination(TimeLapse timeLapse) {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
-            if (getBattery().capacity > 20) {
-                List<Box> boxes = this.agvModel.getAvailableBoxes();
-                int closestBox = 0;
-
-                Box box = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), boxes);
+            if (getBattery().capacity > 0.20*POWERLIMIT) {
+                Point position = this.getRoadModel().getPosition(this);
+                Box box = reasonAboutBoxes(position,timeLapse.getTime(), dmasModel.nodes.get(dmasModel.getClosestNode(position)));
 
                 Optional<Box> curr = Optional.fromNullable(box);
 
                 if (curr.isPresent())
                     this.target = Optional.of((Parcel) curr.get());
-//                Collection<Parcel> parcels = this.agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
-//                Optional<Box> curr = Optional.fromNullable(RoadModels.findClosestObject(
-//                        this.getRoadModel().getPosition(this), this.getRoadModel(), Box.class));
-//                if (curr.isPresent())
-//                    this.target = Optional.of((Parcel) curr.get());
             } else {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
@@ -106,26 +120,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, battery.destination);
 
         BatteryCharger charger = getBatteryCharger(battery.destination);
-/*
-        Point currLocation = this.getRoadModel().getPosition(this);
-        if(this.dmasModel.grm.getGraph().containsNode(currLocation)) {
-            this.dmasModel.grm.getGraph().
-        }
-
-        int result = -1;
-        List<TimeWindow> tws = new ArrayList<>();
-        Queue<Point> queue = new LinkedList<>();
-        while (result == -1) {
-            queue = new LinkedList<>();
-            queue.add(this.getRoadModel().getPosition(this));
-            queue.add(shortestPathTo.get(1));
-            queue.addAll(dmasModel.releaseAnts_D(shortestPathTo.get(1), battery.destination));
-            tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
-            result = dmasModel.releaseAnts_B(queue, tws, this.ID);
-        }
-        dmasModel.releaseAnts_C(queue, tws, this.ID);
-        this.currentPath = Optional.of(queue);
-        */
         Queue<Point> queue = new LinkedList<>(shortestPathTo);
 
         List<TimeWindow> tws = getTimeWindowsForPath(shortestPathTo, tm);
@@ -147,9 +141,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         } else {
             dest = this.target.get().getPickupLocation();
         }
-
-        System.out.println("processing");
-
         boolean getNewPath = false;
         if (this.currentPath.isPresent() && !this.currentPath.get().isEmpty()) {
             List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(this.currentPath.get()), tm);
@@ -179,16 +170,18 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             Queue<Point> queue = new LinkedList<>();
 
             int i = 0;
+            int interval = 2;
             while (result == -1) {
                 System.out.println("searching path...");
                 queue = new LinkedList<>();
                 queue.add(currPoint);
                 queue.add(nearestPoint);
 
-                queue.addAll(dmasModel.releaseAnts_D(nearestPoint, dest));
+                queue.addAll(dmasModel.releaseAnts_D(nearestPoint, dest, interval));
                 tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
                 result = dmasModel.releaseAnts_B(queue, tws, this.ID);
                 i++;
+                interval++;
                 if (i > 1000)
                     try {
                         System.out.println("sleep");
@@ -251,14 +244,10 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     @Override
     protected void tickImpl(TimeLapse timeLapse) {
-        //First task is every agent to load the battery they have.
-        //Battery battery = getBattery();
-
-        //System.out.println(getRoadModel().getObjectsOfType(Box.class).size());
         if (!this.hasBattery) {
             this.hasBattery = true;
             pickupBattery(timeLapse);
-            //System.out.println("Battery added");
+            dmasModel.releaseAnts_Boxs_Info();
             return;
         }
 

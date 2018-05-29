@@ -2,6 +2,7 @@ package DelgMas;
 
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.ModelBuilder.AbstractModelBuilder;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.geom.Point;
@@ -14,6 +15,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import static DelgMas.AgvExample.NUM_AGVS;
 import static com.google.common.base.Preconditions.checkState;
@@ -51,7 +53,8 @@ public class AgvRenderer extends CanvasRenderer.AbstractCanvasRenderer {
             final Image image = uiSchema.getImage(AgvAgent.class);
             checkState(image != null);
 
-            for (final Vehicle v : vehicles) {
+            for (Iterator<Vehicle> it = vehicles.iterator(); it.hasNext(); ) {
+                Vehicle v = it.next();
                 AgvAgent agent = (AgvAgent) v;
                 Battery battery = agent.getBattery();
                 long power = 0;

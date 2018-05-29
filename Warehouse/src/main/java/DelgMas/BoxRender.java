@@ -16,6 +16,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import static DelgMas.AgvExample.NUM_AGVS;
 import static com.google.common.base.Preconditions.checkState;
@@ -45,15 +46,14 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
     }
 
     @Override
-    public void renderDynamic(GC gc, ViewPort viewPort, long l) {
+    public synchronized void renderDynamic(GC gc, ViewPort viewPort, long l) {
         uiSchema.initialize(gc.getDevice());
-
-        synchronized (agvModel) {
             final Collection<Parcel> parcels = agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
             final Image image = uiSchema.getImage(Box.class);
             checkState(image != null);
 
-            for (final Parcel p : parcels) {
+            for (Iterator<Parcel> it = parcels.iterator(); it.hasNext(); ) {
+                Parcel p = it.next();
                 if (p instanceof Box) {
                     Box box = (Box) p;
 //                if (storageTime != null) {
@@ -88,7 +88,7 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
                     gc.drawText(text, (int) LABEL_OFFSET.x + x - textWidth / 2,
                             (int) LABEL_OFFSET.y + y, true);*/
 
-            }
+
         }
     }
 

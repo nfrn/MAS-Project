@@ -13,9 +13,9 @@ import java.util.Iterator;
 
 public class PheromoneStorage implements Visitable {
 
-    public static final int LIFETIME_A = 50;
-    public static final int LIFETIME_B = 50;
-    public static final int LIFETIME_C = 50;
+    public static final int LIFETIME_A = 1000;
+    public static final int LIFETIME_B = 1000;
+    public static final int LIFETIME_C = 1000;
 
 
     public ArrayList<Pheromone_A> list_phero_A;
@@ -71,6 +71,10 @@ public class PheromoneStorage implements Visitable {
             boolean isthere = false;
             for (Pheromone_A phA : list_phero_A) {
                 if (phA.position.equals(pheromone_A.position)) {
+                    phA.chargers_booking1 = new ArrayList<>(pheromone_A.chargers_booking1);
+                    phA.chargers_booking2 = new ArrayList<>(pheromone_A.chargers_booking2);
+                    phA.chargers_booking3 = new ArrayList<>(pheromone_A.chargers_booking3);
+                    phA.chargers_booking4 = new ArrayList<>(pheromone_A.chargers_booking4);
                     phA.lifetime = LIFETIME_A;
                     isthere = true;
                     break;
@@ -107,13 +111,15 @@ public class PheromoneStorage implements Visitable {
                 list_phero_B.add(pheromone_B);
             }
 
-        } else if (ant.getClass() == Ant_D.class) {
-            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_C, position);
+        }
+        else if (ant.getClass() == Ant_Boxs_Info.class) {
+            Pheromone_C pheromone_C = new Pheromone_C(LIFETIME_A, position);
             ant.dropPheromone(pheromone_C);
             boolean isthere = false;
             for (Pheromone_C phC : list_phero_C) {
                 if (phC.position.equals(pheromone_C.position)) {
-                    phC.lifetime = LIFETIME_B;
+                    phC.boxes_info = new ArrayList<>(pheromone_C.boxes_info);
+                    phC.lifetime = LIFETIME_C;
                     isthere = true;
                     break;
                 }
@@ -122,7 +128,9 @@ public class PheromoneStorage implements Visitable {
                 list_phero_C.add(pheromone_C);
             }
         }
-        return 0;
+
+
+            return 0;
     }
 
 
