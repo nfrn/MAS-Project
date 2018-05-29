@@ -5,6 +5,7 @@ import DelgMas.DMASModel;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
+import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.geom.GeomHeuristics;
 import com.github.rinde.rinsim.geom.Point;
 
@@ -46,33 +47,22 @@ public class Ant_D extends Ant {
     }
 
     public Queue<Point> getPath() {
-        Queue<Point> solution = new LinkedList();
-        Point current = origi;
-        Point nextPoint;
-        //System.out.println(origi);
-        /*final Measure<Double, Velocity> maxSpeed = Measure.valueOf(SPEED, dmas.rm.getSpeedUnit());
-        Queue<Point> solution = new LinkedList(dmas.grm.getPathTo(origi, desti, SI.SECOND, maxSpeed, GeomHeuristics.euclidean()).getPath());*/
-        while (!current.equals(desti)) {
-            ArrayList<Point> roads = dmas.nodes.get(current).neighbors;
-            while (true) {
-                nextPoint = roads.get((int) (Math.random() * roads.size()));
-
-                double deltaX = desti.x - current.x;
-                double deltaY = desti.y - current.y;
-                double distance1 = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                deltaX = desti.x - nextPoint.x;
-                deltaY = desti.y - nextPoint.y;
-                double distance2 = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                if (distance2 <= distance1*1.05) {
-                    break;
-                }
-                if (Math.random() < 0.4)
-                    break;
-            }
-            solution.add(nextPoint);
-            current = nextPoint;
+        Queue<Point> solution;
+        Point nextPoint = origi;
+        if(origi.equals(desti)){
+            solution = new LinkedList<>();
+            return solution;
         }
+        double dist = Math.sqrt(Math.pow(origi.x - desti.x, 2) + Math.pow(origi.y - desti.y, 2));
+        do{
+            solution = new LinkedList();
+            nextPoint = origi;
+            while (!nextPoint.equals(desti)) {
+                ArrayList<Point> roads = dmas.nodes.get(nextPoint).neighbors;
+                nextPoint = roads.get((int) (Math.random() * roads.size()));
+                solution.add(nextPoint);
+            }
+        }while(agv.getRoadModel().getDistanceOfPath(solution).getValue() >= (dist*2));
         return solution;
     }
 }
