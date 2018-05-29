@@ -1,6 +1,7 @@
 package VisitorClasses.Ants;
 
 import DelgMas.AgvModel;
+import VisitorClasses.Pheromones.PheromoneConnectionBooking;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
@@ -27,5 +28,10 @@ public class Ant implements Visitor {
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
 
+    }
+
+    @Override
+    public int dropPheromone(PheromoneConnectionBooking pheromone) {
+        return 0;
     }
 }

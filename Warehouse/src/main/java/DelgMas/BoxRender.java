@@ -53,45 +53,37 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
             final Image image = uiSchema.getImage(Box.class);
             checkState(image != null);
 
-            for (final Parcel p : parcels) {
-                if (p instanceof Box) {
-                    Box box = (Box) p;
-//                if (storageTime != null) {
-//                  power = battery.capacity;
-//                }
-//                final String text = String.format("%.0f ", (double) power / agent.POWERLIMIT * 100) + "%";
-//                if (roadModel.getObjectsOfType(Box.class).size() != Nu) {
-//                    break;
-//                }
-                    try {
-                        final Point pos = roadModel.getPosition(p);
-                        final int x = viewPort.toCoordX(pos.x);
-                        final int y = viewPort.toCoordY(pos.y);
-                        if (box.isAvailable) {
-                            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-                            gc.fillOval(x, y, 15,  15);
-                        } else {
-                            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
-                            gc.fillOval(x, y, 15, 15);
-                            final String text = String.format("%d ", box.getStorageTime());
-                            final int textWidth = gc.textExtent(text).x;
-                            gc.drawText(text, (int) x + 20,
-                                    (int) y, true);
-                        }
-                    } catch (Exception e) {
-                        continue;
-                    }
-                }
-                    /*
-                    final int textWidth = gc.textExtent(text).x;
-                    gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLUE));
-                    gc.drawText(text, (int) LABEL_OFFSET.x + x - textWidth / 2,
-                            (int) LABEL_OFFSET.y + y, true);*/
+            try {
+                for (final Parcel p : parcels) {
+                    if (p instanceof Box) {
+                        try {
+                            Box box = (Box) p;
 
+                            final Point pos = roadModel.getPosition(p);
+                            final int x = viewPort.toCoordX(pos.x);
+                            final int y = viewPort.toCoordY(pos.y);
+                            if (box.isAvailable) {
+                                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+                                gc.fillOval(x, y, 15, 15);
+                            } else {
+                                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+                                gc.fillOval(x, y, 15, 15);
+                                final String text = String.format("%d ", box.getStorageTime());
+                                final int textWidth = gc.textExtent(text).x;
+                                gc.drawText(text, (int) x + 20,
+                                        (int) y, true);
+                            }
+                        } catch (Exception e) {
+                            continue;
+                        }
+                    }
+
+                }
+            } catch (Exception e) {
+                System.out.println("some error");
             }
         }
     }
-
 
     @AutoValue
     abstract static class Builder

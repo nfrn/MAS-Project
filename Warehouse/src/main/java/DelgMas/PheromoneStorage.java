@@ -13,9 +13,9 @@ import java.util.Iterator;
 
 public class PheromoneStorage implements Visitable {
 
-    public static final int LIFETIME_A = 50;
-    public static final int LIFETIME_B = 50;
-    public static final int LIFETIME_C = 50;
+    public static final int LIFETIME_A = 100;
+    public static final int LIFETIME_B = 100;
+    public static final int LIFETIME_C = 100;
 
 
     public ArrayList<Pheromone_A> list_phero_A;
@@ -71,6 +71,10 @@ public class PheromoneStorage implements Visitable {
             boolean isthere = false;
             for (Pheromone_A phA : list_phero_A) {
                 if (phA.position.equals(pheromone_A.position)) {
+                    phA.chargers_booking1 = new ArrayList<>(pheromone_A.chargers_booking1);
+                    phA.chargers_booking2 = new ArrayList<>(pheromone_A.chargers_booking2);
+                    phA.chargers_booking3 = new ArrayList<>(pheromone_A.chargers_booking3);
+                    phA.chargers_booking4 = new ArrayList<>(pheromone_A.chargers_booking4);
                     phA.lifetime = LIFETIME_A;
                     isthere = true;
                     break;

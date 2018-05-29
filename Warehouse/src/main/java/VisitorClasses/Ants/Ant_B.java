@@ -1,6 +1,7 @@
 package VisitorClasses.Ants;
 
 import DelgMas.AgvModel;
+import VisitorClasses.Pheromones.PheromoneConnectionBooking;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
@@ -40,6 +41,18 @@ public class Ant_B extends Ant {
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
 
+    }
+
+    @Override
+    public int dropPheromone(PheromoneConnectionBooking pheromone) {
+        long begin = this.timeWindow.begin();
+        long end = this.timeWindow.end();
+        TimeWindow tw = pheromone.connection_booking;
+        if (pheromone.getAgentID() != this.agentID)
+            if (tw.isIn(begin) || tw.isIn(end)) {
+                return -1;
+            }
+        return 0;
     }
 
     public TimeWindow getTimeWindow() {

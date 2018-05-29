@@ -69,8 +69,8 @@ public final class AgvExample {
         Builder viewBuilder = View.builder().with(
                 WarehouseRenderer.builder().withNodes().withMargin(2.0D))
                 .with(AGVRenderer.builder().withDifferentColorsForVehicles())
-                .with(AgvRenderer.builder())
-                .with(BoxRender.builder())
+//                .with(AgvRenderer.builder())
+//                .with(BoxRender.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Box.class, "/graphics/perspective/deliverypackage3.png")

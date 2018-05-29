@@ -6,6 +6,7 @@ import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
 import VisitorClasses.Ants.Ant_D;
+import VisitorClasses.Pheromones.Pheromone_A;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -13,12 +14,12 @@ import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Connection;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
 
 import javax.swing.*;
-import java.text.Collator;
 import java.util.*;
 
 import static DelgMas.AgvExample.TICK_LENGTH;
@@ -30,20 +31,26 @@ public class DMASModel implements TickListener, Model<Point> {
     private int clock_A;
     public RoadModel rm;
     public AgvModel am;
-    public GraphRoadModel grm;
+    public GraphRoadModel graphRoadModel;
     public final Map<Point, PheromoneStorage> nodes;
+    public final Map<Connection, PheromoneConnectionStorage> connections;
     private StringListener stringListener;
 
 
     public DMASModel(RoadModel roadModel, AgvModel agvModel, GraphRoadModel grm) {
         this.rm = roadModel;
         this.am = agvModel;
-        this.grm = grm;
+        this.graphRoadModel = grm;
         this.clock_A = 0;
         nodes = new HashMap<Point, PheromoneStorage>();
-        for (Point p : grm.getGraph().getNodes()) {
+        for (Point p : graphRoadModel.getGraph().getNodes()) {
             this.nodes.put(p, new PheromoneStorage(p, new ArrayList<Point>(grm.getGraph().getOutgoingConnections(p))));
         }
+        connections = new HashMap<Connection, PheromoneConnectionStorage>();
+        for (Connection c : graphRoadModel.getGraph().getConnections()) {
+            this.connections.put(c, new PheromoneConnectionStorage(c));
+        }
+
         createUi(this);
     }
 
@@ -56,38 +63,96 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public int releaseAnts_B(Queue<Point> path, List<TimeWindow> tws, int agentID) {
+    public int releaseAnts_B(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and check if it is free
         //System.out.println("Ants_B released");
+        List<Point> pathList = new ArrayList<>(path);
+
         int i = 0;
-        for (Point pt : path) {
+        for (int j = 0; j < pathList.size(); j++) {
+            Point pt = pathList.get(j);
+
             PheromoneStorage pheroStore = nodes.get(pt);
+            // check if the node is booked
             if (pheroStore != null) {
                 Ant_B antB = new Ant_B(am, tws.get(i), agentID);
                 int result = pheroStore.accept(antB);
                 if (result == -1) {
                     return -1;
                 }
-                i++;
                 antB = null;
             }
+
+            // check if the connection to the nest node is booked
+            if(j+1 < pathList.size()) {
+                Point to = pathList.get(j + 1);
+                TimeWindow next_tw = tws.get(i+1);
+                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
+                TimeWindow tw = TimeWindow.create(tws.get(i).end(), end);
+
+                Point from = pt;
+                if(!this.graphRoadModel.getGraph().containsNode(pt))
+                    from = this.graphRoadModel.getConnection(agent).get().from();
+
+                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+                PheromoneConnectionStorage pcs = connections.get(c);
+                Ant_B antB = new Ant_B(am, tw, agentID);
+                if (pcs.accept(antB) == -1)
+                    return -1;
+
+                c = this.graphRoadModel.getGraph().getConnection(to, from);
+                pcs = connections.get(c);
+                if (pcs.accept(antB) == -1)
+                    return -1;
+
+                antB = null;
+            }
+            i++;
         }
         return 0;
     }
 
-    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws, int agentID) {
+    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and tell to book it
         //System.out.println("Ants_C released");
 
+        List<Point> pathList = new ArrayList<>(path);
+
         int i = 0;
-        for (Point pt : path) {
+        for (int j = 0; j < pathList.size(); j++) {
+            Point pt = pathList.get(j);
             PheromoneStorage pheroStore = nodes.get(pt);
+
+
+            if(j+1 < pathList.size()) {
+                Point to = pathList.get(j+1);
+                TimeWindow next_tw = tws.get(i+1);
+                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
+                TimeWindow tw = TimeWindow.create(tws.get(i).end(), end);
+
+                Point from = pt;
+                if(!this.graphRoadModel.getGraph().containsNode(pt))
+                    from = this.graphRoadModel.getConnection(agent).get().from();
+
+                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+                PheromoneConnectionStorage pcs = connections.get(c);
+                Ant_C antC = new Ant_C(am, tw, agentID);
+                pcs.accept(antC);
+
+                c = this.graphRoadModel.getGraph().getConnection(to, from);
+                pcs = connections.get(c);
+                pcs.accept(antC);
+
+                antC = null;
+            }
+
             if (pheroStore != null) {
                 Ant_C antC = new Ant_C(am, tws.get(i), agentID);
                 pheroStore.accept(antC);
-                i++;
+
                 antC = null;
             }
+            i++;
         }
     }
 
@@ -98,12 +163,17 @@ public class DMASModel implements TickListener, Model<Point> {
 
     }
 
+    public PheromoneConnectionStorage getConnection(Point from, Point to) {
+        return this.connections.get(this.graphRoadModel.getGraph().getConnection(from, to));
+    }
+
+    //**
+    // DEPRECATED
+    //**
     public Point getClosestNode(Point currPoint) {
-        Set<Point> nodes = this.grm.getGraph().getNodes();
+        Set<Point> nodes = this.graphRoadModel.getGraph().getNodes();
         double minDist = Double.MAX_VALUE;
         Point closestPoint = null;
-
-
 
         for (Point p : nodes) {
             double dist = Math.sqrt(Math.pow(currPoint.x - p.x, 2) + Math.pow(currPoint.y - p.y, 2));
@@ -114,7 +184,6 @@ public class DMASModel implements TickListener, Model<Point> {
         }
         return closestPoint;
     }
-
 
     static DMASModel.Builder builder() {
         return new AutoValue_DMASModel_Builder();
