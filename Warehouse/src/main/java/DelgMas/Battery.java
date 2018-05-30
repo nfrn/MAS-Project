@@ -8,7 +8,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
 import static DelgMas.AgvExample.TICK_LENGTH;
 
 public class Battery extends Parcel {
-    public static final int POWERLIMIT = 500;
+    public static final int POWERLIMIT = 2000;
     public static final long CHARGING_DURATION = 10*TICK_LENGTH;
     public static final long DELIVER_TIME = 10*TICK_LENGTH;
     public long capacity;

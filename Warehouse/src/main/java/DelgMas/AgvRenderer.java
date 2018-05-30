@@ -61,7 +61,7 @@ public class AgvRenderer extends CanvasRenderer.AbstractCanvasRenderer {
                 if (battery != null) {
                     power = battery.capacity;
                 }
-                final String text = String.format("%.0f ", (double) power / agent.POWERLIMIT * 100) + "%";
+                final String text = String.format("%.0f ", (double) power / battery.POWERLIMIT * 100) + "%";
                 if(roadModel.getObjectsOfType(Vehicle.class).size()!=NUM_AGVS){break;}
                 try {
                     final Point pos = roadModel.getPosition(v);

@@ -6,6 +6,7 @@ import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,11 @@ public class Ant_Boxs_Info extends Ant {
     }
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
-        pheromone.boxes_info = new ArrayList<>(agv.getParcels(PDPModel.ParcelState.AVAILABLE));
+        pheromone.boxes_info = new ArrayList<>();
+        for(Parcel parcel : agv.getParcels(PDPModel.ParcelState.AVAILABLE)){
+            if(parcel.getClass().equals(Box.class)){
+                pheromone.boxes_info.add(parcel);
+            }
+        }
     }
 }

@@ -23,16 +23,15 @@ import java.util.*;
 import static DelgMas.Battery.CHARGING_DURATION;
 
 public class AgvAgent extends Vehicle implements TickListener, RoadUser {
-    public static final int POWERLIMIT = 500;
     public static final double SPEED = 1;
     private static final int CAPACITY = 2;
-    private static final double POWERCONSUME = 0.05;
-    public static final long VISIT_TIME_LENGTH = 3000;
+    private static final double POWERCONSUME = 1;
+    public static final long VISIT_TIME_LENGTH = 2000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
     public static final long INTERVAL_INC = 1;
 
-    public static final int SLEEP_DURATION = 100;
+    public static final int SLEEP_DURATION = 20;
 
     public int ID;
 
@@ -72,6 +71,25 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         boxes_info.sort(new Comparator<Parcel>() {
             @Override
             public int compare(Parcel b1, Parcel b2) {
+                Box b_1 = (Box) b1;
+                Box b_2 = (Box) b2;
+                System.out.println(b_1.finaldestination);
+                System.out.println(b_2.finaldestination);
+                if (!b_1.isAvailable) {
+                    return -1;
+                }
+                if (!b_2.isAvailable) {
+                    return 1;
+                }
+
+                if (b_1.finaldestination && !b_2.finaldestination) {
+                    return 1;
+                }
+
+                if (!b_1.finaldestination && b_2.finaldestination) {
+                    return -1;
+                }
+
                 double pickupdistance1 = Math.sqrt(Math.pow(b1.getPickupLocation().x - position.x, 2) + Math.pow(b1.getPickupLocation().y - position.y, 2));
                 double pickupdistance2 = Math.sqrt(Math.pow(b2.getPickupLocation().x - position.x, 2) + Math.pow(b2.getPickupLocation().y - position.y, 2));
                 double deliverydistance1 = Math.sqrt(Math.pow(b1.getDeliveryLocation().x - position.x, 2) + Math.pow(b1.getDeliveryLocation().y - position.y, 2));
@@ -82,16 +100,41 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 double deliverytimeleft1 = b1.getDeliveryTimeWindow().end() - time;
                 double deliverytimeleft2 = b2.getDeliveryTimeWindow().end() - time;
 
-                return ((int) ((pickupdistance1 * pickuptimeleft1 + deliverydistance1 * deliverytimeleft1)
-                        - (pickupdistance2 * pickuptimeleft2 + deliverydistance2 * deliverytimeleft2)));
+                double score1 = pickupdistance1 * pickuptimeleft1 + deliverydistance1 * deliverytimeleft1;
+                double score2 = pickupdistance2 * pickuptimeleft2 + deliverydistance2 * deliverytimeleft2;
+
+                double difference = score1 - score2;
+                if (difference > 0) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             }
         });
-        return (Box) boxes_info.get(0);
+        if (boxes_info.size() == 0)
+            return null;
+        else
+            return (Box) boxes_info.get(boxes_info.size() - 1);
     }
 
-    private boolean canwegetthere(Point p1, Point p2) {
+    private boolean canwegetthere(Point p1, Point p2, Point p3) {
         double dist = Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
-        if (getBattery().capacity <= dist * 1.5 * POWERCONSUME) {
+        double dist2 = Math.abs(p2.x - p3.x) + Math.abs(p2.y - p3.y);
+
+        Measure<Double, Velocity> speed = Measure.valueOf(this.getSpeed(), this.getRoadModel().getSpeedUnit());
+        BaseUnit<Duration> duration = new BaseUnit<Duration>("s");
+
+        Measure<Double, Length> distance = Measure.valueOf(dist, this.getRoadModel().getDistanceUnit());
+        Measure<Double, Length> distance2 = Measure.valueOf(dist2, this.getRoadModel().getDistanceUnit());
+
+        double travelTime = RoadModels.computeTravelTime(speed, distance, duration);
+        travelTime += RoadModels.computeTravelTime(speed, distance2, duration);
+
+        System.out.println(travelTime);
+        System.out.println(getBattery().capacity);
+        if (getBattery().capacity <= travelTime) {
+
+            System.out.println("False");
             return false;
         }
         return true;
@@ -102,12 +145,15 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             Point position = this.getRoadModel().getPosition(this);
             Box box = reasonAboutBoxes(position, timeLapse.getTime(), dmasModel.nodes.get(dmasModel.getClosestNode(position)));
 
+            if(box == null)
+                return;
+
             Optional<Box> curr = Optional.fromNullable(box);
 
             if (curr.isPresent())
                 this.target = Optional.of((Parcel) curr.get());
 
-            if (!canwegetthere(position, curr.get().getPickupLocation())) {
+            if (!canwegetthere(position, curr.get().getPickupLocation(), curr.get().getDeliveryLocation())) {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
                 battery.destination = batteryCharger.position;
@@ -167,7 +213,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 interval += INTERVAL_INC;
             } else {
                 goSleep = true;
-                //this.currentPath = Optional.absent();
+                this.currentPath = Optional.absent();
                 break;
             }
         }
@@ -277,7 +323,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         if (!goSleep) {
-
             try {
                 this.getRoadModel().followPath(this, this.currentPath.get(), tm);
             } catch (Exception e) {
@@ -322,28 +367,28 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         return timeWindows;
     }
 
-    public void bookSleepingSpot(TimeLapse tm) {
+    public void bookCurrentPosition(TimeLapse tm) {
         Point currPoint = this.getRoadModel().getPosition(this);
         if (this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
             // book just the node
             Queue<Point> q = new LinkedList<>();
             q.add(currPoint);
             List<TimeWindow> tws = new ArrayList<>();
-            tws.add(TimeWindow.create(tm.getTime(), tm.getTime()+1000));
-            this.dmasModel.releaseAnts_Booking(q,tws,this.ID, this);
+            tws.add(TimeWindow.create(tm.getTime(), tm.getTime() + VISIT_TIME_LENGTH));
+            this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         } else {
             // book the connection
             System.out.println("not on a node!!!!!!!");
             Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
             Point a = c.from();
-            Point b = c.to();
+            Point b = currPoint;//c.to();
             Queue<Point> q = new LinkedList<>();
             q.add(a);
             q.add(b);
             List<TimeWindow> tws = new ArrayList<>();
-            tws.add(TimeWindow.create(tm.getTime()-2000, tm.getTime()-1000));
-            tws.add(TimeWindow.create(tm.getTime()+1000, tm.getTime()+1000));
-            this.dmasModel.releaseAnts_Booking(q,tws,this.ID, this);
+            tws.add(TimeWindow.create(Math.max(0, tm.getTime() - VISIT_TIME_LENGTH), Math.max(0, tm.getTime() - VISIT_TIME_LENGTH)));
+            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + VISIT_TIME_LENGTH));
+            this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         }
     }
 
@@ -356,74 +401,70 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     protected void tickImpl(TimeLapse timeLapse) {
         //First task is every agent to load the battery they have.
         //Battery battery = getBattery();
+        if(this.ID == 2)
+            System.out.println();
+        if(this.ID == 5)
+            System.out.println();
 
-        //System.out.println(getRoadModel().getObjectsOfType(Box.class).size());
-        if (this.sleep > 0) {
-            this.sleep -= 1;
-            System.out.println("************** SLEEEEEEEEEEEEEEP  ID == " + this.ID);
-            // need to book the current node / connection where the car is sleeping
-            this.bookSleepingSpot(timeLapse);
+        this.bookCurrentPosition(timeLapse);
 
-            if (sleep ==0 && !this.has_delivering_box()) {
-                this.nextDestination(timeLapse);
-            }
-        } else {
-            if (!this.hasBattery) {
-                this.hasBattery = true;
-                pickupBattery(timeLapse);
-                dmasModel.releaseAnts_Boxs_Info();
-                return;
-            }
+        if (!this.hasBattery) {
+            this.hasBattery = true;
+            pickupBattery(timeLapse);
+            dmasModel.releaseAnts_Boxs_Info();
+            return;
+        }
 
-            if (!timeLapse.hasTimeLeft()) {
-                return;
-            }
-            if (!target.isPresent())
-                this.nextDestination(timeLapse);
-
-            if (target.isPresent()) {
-                if (is_delivering_box()) {
-                    if (!has_delivering_box() && is_in_pick_destination()) {
-                        pickupBox(timeLapse);
-                    } else if (has_delivering_box() && is_in_delivery_destination()) {
-                        this.agvModel.store_box(this, (Box) target.get(), timeLapse, rng);
-                        this.currentPath = Optional.absent();
-                        target = Optional.absent();
-                    } else if (this.agvModel.containerContains(this, target.get())) {
+        if (!timeLapse.hasTimeLeft()) {
+            return;
+        }
+        if (!target.isPresent()) {
+            System.out.println(this.ID +" no box ???????????????");
+            this.nextDestination(timeLapse);
+        }
+        if (target.isPresent()) {
+            if (is_delivering_box()) {
+                if (!has_delivering_box() && is_in_pick_destination()) {
+                    pickupBox(timeLapse);
+                } else if (has_delivering_box() && is_in_delivery_destination()) {
+                    this.agvModel.store_box(this, (Box) target.get(), timeLapse, rng);
+                    this.currentPath = Optional.absent();
+                    target = Optional.absent();
+                } else if (this.agvModel.containerContains(this, target.get())) {
+                    boolean success = moveBox(timeLapse);
+                    if (!success)
+                        this.sleep = SLEEP_DURATION;
+                } else {
+                    if (getRoadModel().containsObject(target.get())) {
                         boolean success = moveBox(timeLapse);
                         if (!success)
                             this.sleep = SLEEP_DURATION;
                     } else {
-                        if (getRoadModel().containsObject(target.get())) {
-                            boolean success = moveBox(timeLapse);
-                            if (!success)
-                                this.sleep = SLEEP_DURATION;
-                        } else {
-                            target = Optional.absent();
-                        }
-                    }
-                } else {
-                    if (has_delivering_battery() && is_in_charger_delivery_destination()) {
-                        dropBattery((Battery) target.get(), timeLapse);
-                    } else if (!has_delivering_battery() && is_in_charger_delivery_destination()) {
-                        updateBattery(timeLapse);
                         target = Optional.absent();
-                    } else if (this.agvModel.containerContains(this, target.get())) {
+                    }
+                }
+            } else {
+                if (has_delivering_battery() && is_in_charger_delivery_destination()) {
+                    dropBattery((Battery) target.get(), timeLapse);
+                } else if (!has_delivering_battery() && is_in_charger_delivery_destination()) {
+                    updateBattery(timeLapse);
+                    target = Optional.absent();
+                } else if (this.agvModel.containerContains(this, target.get())) {
+                    boolean success = moveBattery(timeLapse);
+                    if (!success)
+                        this.sleep = SLEEP_DURATION;
+                } else {
+                    if (getRoadModel().containsObject(target.get())) {
                         boolean success = moveBattery(timeLapse);
                         if (!success)
                             this.sleep = SLEEP_DURATION;
                     } else {
-                        if (getRoadModel().containsObject(target.get())) {
-                            boolean success = moveBattery(timeLapse);
-                            if (!success)
-                                this.sleep = SLEEP_DURATION;
-                        } else {
-                            target = Optional.absent();
-                        }
+                        target = Optional.absent();
                     }
                 }
             }
         }
+
     }
 
     private void dropBattery(Battery battery, TimeLapse timeLapse) {

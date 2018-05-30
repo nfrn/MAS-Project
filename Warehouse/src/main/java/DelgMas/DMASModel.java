@@ -28,7 +28,6 @@ import static DelgMas.AgvExample.TICK_LENGTH;
 public class DMASModel implements TickListener, Model<Point> {
 
     private static final long ANT_A_FREQUENCY = 40 * TICK_LENGTH;
-    private static final long PATHS = 5;
     private int clock_A;
     public RoadModel rm;
     public AgvModel am;
@@ -85,7 +84,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 antB = null;
             }
 
-            // check if the connection to the nest node is booked
+            // check if the connection to the next node is booked
             if(j+1 < pathList.size()) {
                 Point to = pathList.get(j + 1);
                 TimeWindow next_tw = tws.get(i+1);
@@ -102,10 +101,10 @@ public class DMASModel implements TickListener, Model<Point> {
                 if (pcs.accept(antB) == -1)
                     return -1;
 
-                c = this.graphRoadModel.getGraph().getConnection(to, from);
-                pcs = connections.get(c);
-                if (pcs.accept(antB) == -1)
-                    return -1;
+//                c = this.graphRoadModel.getGraph().getConnection(to, from);
+//                pcs = connections.get(c);
+//                if (pcs.accept(antB) == -1)
+//                    return -1;
 
                 antB = null;
             }
@@ -130,20 +129,23 @@ public class DMASModel implements TickListener, Model<Point> {
                 Point to = pathList.get(j+1);
                 TimeWindow next_tw = tws.get(i+1);
                 long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
-                TimeWindow tw = TimeWindow.create(tws.get(i).end() - AgvAgent.VISIT_TIME_LENGTH, end + AgvAgent.VISIT_TIME_LENGTH);
+                TimeWindow tw = TimeWindow.create(Math.max(0, tws.get(i).end() - AgvAgent.VISIT_TIME_LENGTH), end + AgvAgent.VISIT_TIME_LENGTH);
 
                 Point from = pt;
                 if(!this.graphRoadModel.getGraph().containsNode(pt))
                     from = this.graphRoadModel.getConnection(agent).get().from();
 
-                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+                if(!this.graphRoadModel.getGraph().containsNode(to))
+                    to = this.graphRoadModel.getConnection(agent).get().to();
+
+                Connection c = this.graphRoadModel.getGraph().getConnection(to, from);
                 PheromoneConnectionStorage pcs = connections.get(c);
                 Ant_C antC = new Ant_C(am, tw, agentID);
                 pcs.accept(antC);
 
-                c = this.graphRoadModel.getGraph().getConnection(to, from);
-                pcs = connections.get(c);
-                pcs.accept(antC);
+//                c = this.graphRoadModel.getGraph().getConnection(to, from);
+//                pcs = connections.get(c);
+//                pcs.accept(antC);
 
                 antC = null;
             }
@@ -216,6 +218,10 @@ public class DMASModel implements TickListener, Model<Point> {
         for (PheromoneStorage phestore : nodes.values()) {
             phestore.time_passed();
         }
+        for (PheromoneConnectionStorage phestore : connections.values()) {
+            phestore.time_passed();
+        }
+
 
         for (PheromoneConnectionStorage phestore : connections.values()) {
             phestore.time_passed();
