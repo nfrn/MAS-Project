@@ -47,7 +47,7 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 7;
+    public static final int NUM_AGVS = 5;
     public static final int NUM_BOXES = 13;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
@@ -84,7 +84,7 @@ public final class AgvExample {
                         .withImageAssociation(
                                 BatteryCharger.class, "/graphics/flat/warehouse-32.png"))
                 .withTitleAppendix("AGV example")
-                .with(StatsPanel.builder())
+                //.with(StatsPanel.builder())
                 .withResolution(1300, 1000);
 
         final Simulator sim = Simulator.builder()

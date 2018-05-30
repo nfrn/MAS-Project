@@ -14,7 +14,7 @@ import java.util.Iterator;
 public class PheromoneStorage implements Visitable {
 
     public static final int LIFETIME_A = 40;
-    public static final int LIFETIME_B = 3;
+    public static final int LIFETIME_B = 30;
     public static final int LIFETIME_C = 40;
 
 
@@ -33,6 +33,7 @@ public class PheromoneStorage implements Visitable {
     }
 
     public void time_passed() {
+
 
         Iterator<Pheromone_A> iter = list_phero_A.iterator();
         while (iter.hasNext()) {

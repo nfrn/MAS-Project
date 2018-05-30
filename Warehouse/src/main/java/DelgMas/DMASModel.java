@@ -65,7 +65,7 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public int releaseAnts_B(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
+    public int releaseAnts_CheckBooking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and check if it is free
         //System.out.println("Ants_B released");
         List<Point> pathList = new ArrayList<>(path);
@@ -114,7 +114,7 @@ public class DMASModel implements TickListener, Model<Point> {
         return 0;
     }
 
-    public void releaseAnts_C(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
+    public void releaseAnts_Booking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and tell to book it
         //System.out.println("Ants_C released");
 
@@ -130,7 +130,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 Point to = pathList.get(j+1);
                 TimeWindow next_tw = tws.get(i+1);
                 long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
-                TimeWindow tw = TimeWindow.create(tws.get(i).end(), end);
+                TimeWindow tw = TimeWindow.create(tws.get(i).end() - AgvAgent.VISIT_TIME_LENGTH, end + AgvAgent.VISIT_TIME_LENGTH);
 
                 Point from = pt;
                 if(!this.graphRoadModel.getGraph().containsNode(pt))
@@ -214,6 +214,10 @@ public class DMASModel implements TickListener, Model<Point> {
         }
 
         for (PheromoneStorage phestore : nodes.values()) {
+            phestore.time_passed();
+        }
+
+        for (PheromoneConnectionStorage phestore : connections.values()) {
             phestore.time_passed();
         }
 

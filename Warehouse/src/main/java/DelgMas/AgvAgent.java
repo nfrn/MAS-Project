@@ -30,9 +30,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final long VISIT_TIME_LENGTH = 3000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
-    public static final long INTERVAL_INC = 3;
+    public static final long INTERVAL_INC = 1;
 
-    public static final int SLEEP_DURATION = 5;
+    public static final int SLEEP_DURATION = 100;
 
     public int ID;
 
@@ -67,7 +67,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
     }
 
-    private Box reasonAboutBoxes(final Point position, final long time, PheromoneStorage store){
+    private Box reasonAboutBoxes(final Point position, final long time, PheromoneStorage store) {
         ArrayList<Parcel> boxes_info = new ArrayList<>(store.list_phero_C.get(0).boxes_info);
         boxes_info.sort(new Comparator<Parcel>() {
             @Override
@@ -77,21 +77,21 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 double deliverydistance1 = Math.sqrt(Math.pow(b1.getDeliveryLocation().x - position.x, 2) + Math.pow(b1.getDeliveryLocation().y - position.y, 2));
                 double deliverydistance2 = Math.sqrt(Math.pow(b2.getDeliveryLocation().x - position.x, 2) + Math.pow(b2.getDeliveryLocation().y - position.y, 2));
 
-                double pickuptimeleft1 = b1.getPickupTimeWindow().end()-time;
-                double pickuptimeleft2 = b2.getPickupTimeWindow().end()-time;
-                double deliverytimeleft1 = b1.getDeliveryTimeWindow().end()-time;
-                double deliverytimeleft2 = b2.getDeliveryTimeWindow().end()-time;
+                double pickuptimeleft1 = b1.getPickupTimeWindow().end() - time;
+                double pickuptimeleft2 = b2.getPickupTimeWindow().end() - time;
+                double deliverytimeleft1 = b1.getDeliveryTimeWindow().end() - time;
+                double deliverytimeleft2 = b2.getDeliveryTimeWindow().end() - time;
 
-                return ((int)((pickupdistance1*pickuptimeleft1 + deliverydistance1*deliverytimeleft1)
-                        - (pickupdistance2*pickuptimeleft2 + deliverydistance2*deliverytimeleft2)));
+                return ((int) ((pickupdistance1 * pickuptimeleft1 + deliverydistance1 * deliverytimeleft1)
+                        - (pickupdistance2 * pickuptimeleft2 + deliverydistance2 * deliverytimeleft2)));
             }
         });
         return (Box) boxes_info.get(0);
     }
 
-    private boolean canwegetthere(Point p1, Point p2){
+    private boolean canwegetthere(Point p1, Point p2) {
         double dist = Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
-        if(getBattery().capacity <= dist*1.5*POWERCONSUME){
+        if (getBattery().capacity <= dist * 1.5 * POWERCONSUME) {
             return false;
         }
         return true;
@@ -100,14 +100,14 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private void nextDestination(TimeLapse timeLapse) {
         if (this.agvModel.getVehicleState(this).equals(PDPModel.VehicleState.IDLE)) {
             Point position = this.getRoadModel().getPosition(this);
-            Box box = reasonAboutBoxes(position,timeLapse.getTime(), dmasModel.nodes.get(dmasModel.getClosestNode(position)));
+            Box box = reasonAboutBoxes(position, timeLapse.getTime(), dmasModel.nodes.get(dmasModel.getClosestNode(position)));
 
             Optional<Box> curr = Optional.fromNullable(box);
 
             if (curr.isPresent())
                 this.target = Optional.of((Parcel) curr.get());
 
-            if(!canwegetthere(position, curr.get().getPickupLocation())){
+            if (!canwegetthere(position, curr.get().getPickupLocation())) {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
                 battery.destination = batteryCharger.position;
@@ -151,37 +151,41 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             System.out.println("searching path...");
             queue = new LinkedList<>();
             queue.add(currPoint);
-            if(!currPoint.equals(nearestPoint))
+            if (!currPoint.equals(nearestPoint))
                 queue.add(nearestPoint);
             queue.addAll(dmasModel.releaseAnts_D(nearestPoint, battery.destination, interval));
+
+            // add charging time to timewindows
             tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
-            result = dmasModel.releaseAnts_B(queue, tws, this.ID, this);
+            TimeWindow lastTw = tws.get(tws.size() - 1);
+            TimeWindow newTw = TimeWindow.create(lastTw.begin(), lastTw.end() + battery.getDeliveryDuration());
+            tws.set(tws.size() - 1, newTw);
+
+            result = dmasModel.releaseAnts_CheckBooking(queue, tws, this.ID, this);
             i++;
             if (interval < INTERVAL_MAX) {
-                interval+=INTERVAL_INC;
-            }
-            else{
+                interval += INTERVAL_INC;
+            } else {
                 goSleep = true;
-                this.currentPath = Optional.absent();
+                //this.currentPath = Optional.absent();
                 break;
             }
         }
-        if(!goSleep) {
+        if (!goSleep) {
             // check if battery charger is free ???
 
-            TimeWindow lastTw = tws.get(tws.size() - 1);
-            TimeWindow newTw = TimeWindow.create(lastTw.begin(), lastTw.end() + battery.getDeliveryDuration());
+//            TimeWindow lastTw = tws.get(tws.size() - 1);
+//            TimeWindow newTw = TimeWindow.create(lastTw.begin(), lastTw.end() + battery.getDeliveryDuration());
+//            tws.set(tws.size() - 1, newTw);
 
-            //if(charger.checkBooking(newTw)) {
-                tws.set(tws.size() - 1, newTw);
-                dmasModel.releaseAnts_C(queue, tws, this.ID, this);
-                this.currentPath = Optional.of(queue);
+            dmasModel.releaseAnts_Booking(queue, tws, this.ID, this);
+            this.currentPath = Optional.of(queue);
 
-                charger.bookBatteryCharger(newTw);
+            charger.bookBatteryCharger(tws.get(tws.size() - 1));
 
-                this.getRoadModel().followPath(this, queue, tm);
-                this.getBattery().capacity -= POWERCONSUME;
-                return true;
+            this.getRoadModel().followPath(this, queue, tm);
+            this.getBattery().capacity -= POWERCONSUME;
+            return true;
             //} else
             //    return false;
         } else {
@@ -199,17 +203,33 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             dest = this.target.get().getPickupLocation();
         }
 
-        System.out.println("processing");
+//        if(this.ID==0) System.out.println("processing");
 
         boolean getNewPath = false;
         if (this.currentPath.isPresent() && !this.currentPath.get().isEmpty()) {
-            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(this.currentPath.get()), tm);
-            int result = dmasModel.releaseAnts_B(this.currentPath.get(), tws, this.ID, this);
+
+            Point currPoint = this.getRoadModel().getPosition(this);
+//            Point nearestPoint = currPoint;
+            Queue<Point> queue = new LinkedList<>();
+            if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
+//                System.out.println("not on a node!!!!!!!");
+//                Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
+//                Point nearestPoint = c.to();
+                queue.add(currPoint);
+            } else if (!((LinkedList) this.currentPath.get()).getFirst().equals(currPoint)) {
+                queue.add(currPoint);
+            }
+
+            queue.addAll(this.currentPath.get());
+
+            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
+            int result = dmasModel.releaseAnts_CheckBooking(queue, tws, this.ID, this);
             if (result == -1)
                 getNewPath = true;
             else {
                 // rebook the old path
-                dmasModel.releaseAnts_C(this.currentPath.get(), tws, this.ID, this);
+                dmasModel.releaseAnts_Booking(queue, tws, this.ID, this);
+                this.currentPath = Optional.of(queue);
             }
 
         } else
@@ -220,7 +240,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             Point currPoint = this.getRoadModel().getPosition(this);
             Point nearestPoint = currPoint;
             if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
-                System.out.println("not on a node!!!!!!!");
+//                System.out.println("not on a node!!!!!!!");
                 Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
                 nearestPoint = c.to();
             }
@@ -232,7 +252,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             int i = 0;
             int interval = INTERVAL_BEG;
             while (result == -1) {
-                System.out.println("searching path...");
+//                System.out.println("searching path...");
                 queue = new LinkedList<>();
                 queue.add(currPoint);
                 if (!currPoint.equals(nearestPoint))
@@ -240,24 +260,24 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
                 queue.addAll(dmasModel.releaseAnts_D(nearestPoint, dest, interval));
                 tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
-                result = dmasModel.releaseAnts_B(queue, tws, this.ID, this);
+                result = dmasModel.releaseAnts_CheckBooking(queue, tws, this.ID, this);
                 i++;
                 if (interval < INTERVAL_MAX) {
-                    interval+=INTERVAL_INC;
-                }
-                else{
+                    interval += INTERVAL_INC;
+                } else {
                     goSleep = true;
-                    this.currentPath = Optional.absent();
+                    //this.currentPath = Optional.absent();
                     break;
                 }
             }
-            if(!goSleep) {
-                dmasModel.releaseAnts_C(queue, tws, this.ID, this);
+            if (!goSleep) {
+                dmasModel.releaseAnts_Booking(queue, tws, this.ID, this);
                 this.currentPath = Optional.of(queue);
             }
         }
 
         if (!goSleep) {
+
             try {
                 this.getRoadModel().followPath(this, this.currentPath.get(), tm);
             } catch (Exception e) {
@@ -302,6 +322,31 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         return timeWindows;
     }
 
+    public void bookSleepingSpot(TimeLapse tm) {
+        Point currPoint = this.getRoadModel().getPosition(this);
+        if (this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
+            // book just the node
+            Queue<Point> q = new LinkedList<>();
+            q.add(currPoint);
+            List<TimeWindow> tws = new ArrayList<>();
+            tws.add(TimeWindow.create(tm.getTime(), tm.getTime()+1000));
+            this.dmasModel.releaseAnts_Booking(q,tws,this.ID, this);
+        } else {
+            // book the connection
+            System.out.println("not on a node!!!!!!!");
+            Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
+            Point a = c.from();
+            Point b = c.to();
+            Queue<Point> q = new LinkedList<>();
+            q.add(a);
+            q.add(b);
+            List<TimeWindow> tws = new ArrayList<>();
+            tws.add(TimeWindow.create(tm.getTime()-2000, tm.getTime()-1000));
+            tws.add(TimeWindow.create(tm.getTime()+1000, tm.getTime()+1000));
+            this.dmasModel.releaseAnts_Booking(q,tws,this.ID, this);
+        }
+    }
+
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
 
@@ -315,7 +360,13 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         //System.out.println(getRoadModel().getObjectsOfType(Box.class).size());
         if (this.sleep > 0) {
             this.sleep -= 1;
-            System.out.println("************** SLEEEEEEEEEEEEEEP  " + this.sleep);
+            System.out.println("************** SLEEEEEEEEEEEEEEP  ID == " + this.ID);
+            // need to book the current node / connection where the car is sleeping
+            this.bookSleepingSpot(timeLapse);
+
+            if (sleep ==0 && !this.has_delivering_box()) {
+                this.nextDestination(timeLapse);
+            }
         } else {
             if (!this.hasBattery) {
                 this.hasBattery = true;

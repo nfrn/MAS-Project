@@ -15,7 +15,7 @@ import java.util.Iterator;
 
 public class PheromoneConnectionStorage implements Visitable {
 
-    public static final int LIFETIME = 50;
+    public static final int LIFETIME = PheromoneStorage.LIFETIME_B;
 
     public ArrayList<PheromoneConnectionBooking> list_phero_Connection_Booking;
 
@@ -58,7 +58,6 @@ public class PheromoneConnectionStorage implements Visitable {
             }
 
         } else if(ant.getClass() == Ant_B.class) {
-            // TODO check if the connection is booked . . .
             Ant_B antB = (Ant_B) ant;
             //Pheromone_B pheromone_B = new Pheromone_B(LIFETIME_B,position, antB.getTimeWindow());
             for (PheromoneConnectionBooking pheromone : list_phero_Connection_Booking) {
