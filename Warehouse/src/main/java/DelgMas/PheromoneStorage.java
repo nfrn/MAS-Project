@@ -14,7 +14,7 @@ import java.util.Iterator;
 public class PheromoneStorage implements Visitable {
 
     public static final int LIFETIME_A = 40;
-    public static final int LIFETIME_B = 10;
+    public static final int LIFETIME_B = 3;
     public static final int LIFETIME_C = 40;
 
 

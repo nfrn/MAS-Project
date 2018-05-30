@@ -47,8 +47,8 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 2.0D;
-    public static final int NUM_AGVS = 6;
-    public static final int NUM_BOXES = 12;
+    public static final int NUM_AGVS = 7;
+    public static final int NUM_BOXES = 13;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
@@ -57,6 +57,7 @@ public final class AgvExample {
     public static List<Point> storage_positions;
     public static List<Point> charger_positions;
     public static List<Point> depot_positions;
+    public static List<Point> agv_positions;
     //Time
     public static final long TICK_LENGTH= 1000;
 
@@ -73,8 +74,8 @@ public final class AgvExample {
         Builder viewBuilder = View.builder().with(
                 WarehouseRenderer.builder().withNodes().withMargin(2.0D))
                 .with(AGVRenderer.builder().withDifferentColorsForVehicles())
-//                .with(AgvRenderer.builder())
-//                .with(BoxRender.builder())
+                .with(AgvRenderer.builder())
+                .with(BoxRender.builder())
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(
                                 Box.class, "/graphics/perspective/deliverypackage3.png")
@@ -83,7 +84,7 @@ public final class AgvExample {
                         .withImageAssociation(
                                 BatteryCharger.class, "/graphics/flat/warehouse-32.png"))
                 .withTitleAppendix("AGV example")
-                //.with(StatsPanel.builder())
+                .with(StatsPanel.builder())
                 .withResolution(1300, 1000);
 
         final Simulator sim = Simulator.builder()
@@ -118,6 +119,11 @@ public final class AgvExample {
             }
         }
 
+        agv_positions = new ArrayList<>();
+        for (int x = 0; x < NUM_AGVS; x++) {
+            agv_positions.add(new Point(8, (x * 4)*2));
+        }
+
         box_positions = new ArrayList<>();
         for (int x = 0; x < NUM_BOXES; ++x) {
             box_positions.add(new Point(0, x * 4));
@@ -143,7 +149,7 @@ public final class AgvExample {
         }
 
         for (int i = 0; i < NUM_AGVS; ++i) {
-            Point position = roadModel.getRandomPosition(rng);
+            Point position = agv_positions.get(i);
             sim.register(new AgvAgent(position, rng, agvModel,dmasModel, i));
             sim.register(new Battery(position));
         }
@@ -152,21 +158,25 @@ public final class AgvExample {
             @Override
             public void tick(TimeLapse time) {
 
+
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
                 //System.out.println(currentTime);
 
                 for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
-                    boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
-                    boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
+                    if(Math.random()<0.05) {
+                        boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
+                        boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
 
-                    if(is_beg && !is_anything_there){
-                        //System.out.println("Added in fountain");
-                        sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
-                                storage_positions.get(rng.nextInt(storage_positions.size())),currentTime, false));
+                        if (is_beg && !is_anything_there) {
+                            //System.out.println("Added in fountain");
+                            sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
+                                    storage_positions.get(rng.nextInt(storage_positions.size())), currentTime, false));
+                        }
                     }
 
                 }
+
             }
 
             public boolean is_anything_there(Point orig){

@@ -48,6 +48,7 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
     @Override
     public synchronized void renderDynamic(GC gc, ViewPort viewPort, long l) {
         uiSchema.initialize(gc.getDevice());
+        try {
             final Collection<Parcel> parcels = agvModel.getParcels(PDPModel.ParcelState.AVAILABLE);
             final Image image = uiSchema.getImage(Box.class);
             checkState(image != null);
@@ -56,7 +57,6 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
                 Parcel p = it.next();
                 if (p instanceof Box) {
                     Box box = (Box) p;
-                    try {
                         final Point pos = roadModel.getPosition(p);
                         final int x = viewPort.toCoordX(pos.x);
                         final int y = viewPort.toCoordY(pos.y);
@@ -71,10 +71,10 @@ public class BoxRender extends CanvasRenderer.AbstractCanvasRenderer {
                             gc.drawText(text, (int) x + 20,
                                     (int) y, true);
                         }
-                    } catch (Exception e) {
-                        continue;
-                    }
                 }
+            }
+        }catch (Exception e) {
+            return;
         }
     }
 

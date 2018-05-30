@@ -12,9 +12,7 @@ import com.github.rinde.rinsim.geom.Point;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/**
- * @author Matija Kljun
- */
+
 public class PheromoneConnectionStorage implements Visitable {
 
     public static final int LIFETIME = 50;
