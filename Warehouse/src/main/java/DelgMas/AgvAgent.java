@@ -23,16 +23,15 @@ import java.util.*;
 import static DelgMas.Battery.CHARGING_DURATION;
 
 public class AgvAgent extends Vehicle implements TickListener, RoadUser {
-    public static final int POWERLIMIT = 500;
     public static final double SPEED = 1;
     private static final int CAPACITY = 2;
-    private static final double POWERCONSUME = 0.05;
-    public static final long VISIT_TIME_LENGTH = 3000;
+    private static final double POWERCONSUME = 1;
+    public static final long VISIT_TIME_LENGTH = 1000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
-    public static final long INTERVAL_INC = 3;
+    public static final long INTERVAL_INC = 1;
 
-    public static final int SLEEP_DURATION = 5;
+    public static final int SLEEP_DURATION = 20;
 
     public int ID;
 
@@ -72,6 +71,25 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         boxes_info.sort(new Comparator<Parcel>() {
             @Override
             public int compare(Parcel b1, Parcel b2) {
+                Box b_1 = (Box) b1;
+                Box b_2 = (Box) b2;
+                System.out.println(b_1.finaldestination);
+                System.out.println(b_2.finaldestination);
+                if(!b_1.isAvailable){
+                    return -1;
+                }
+                if(!b_2.isAvailable){
+                    return 1;
+                }
+
+                if(b_1.finaldestination && !b_2.finaldestination){
+                    return 1;
+                }
+
+                if(!b_1.finaldestination && b_2.finaldestination){
+                    return -1;
+                }
+
                 double pickupdistance1 = Math.sqrt(Math.pow(b1.getPickupLocation().x - position.x, 2) + Math.pow(b1.getPickupLocation().y - position.y, 2));
                 double pickupdistance2 = Math.sqrt(Math.pow(b2.getPickupLocation().x - position.x, 2) + Math.pow(b2.getPickupLocation().y - position.y, 2));
                 double deliverydistance1 = Math.sqrt(Math.pow(b1.getDeliveryLocation().x - position.x, 2) + Math.pow(b1.getDeliveryLocation().y - position.y, 2));
@@ -82,16 +100,40 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 double deliverytimeleft1 = b1.getDeliveryTimeWindow().end()-time;
                 double deliverytimeleft2 = b2.getDeliveryTimeWindow().end()-time;
 
-                return ((int)((pickupdistance1*pickuptimeleft1 + deliverydistance1*deliverytimeleft1)
-                        - (pickupdistance2*pickuptimeleft2 + deliverydistance2*deliverytimeleft2)));
+                double score1 = pickupdistance1*pickuptimeleft1 + deliverydistance1*deliverytimeleft1;
+                double score2 = pickupdistance2*pickuptimeleft2 + deliverydistance2*deliverytimeleft2;
+
+                double difference = score1- score2;
+                if(difference>0){
+                    return 1;
+                }
+                else{
+                    return -1;
+                }
             }
         });
-        return (Box) boxes_info.get(0);
+        System.out.println(boxes_info.get(boxes_info.size()-1));
+        return (Box) boxes_info.get(boxes_info.size()-1);
     }
 
-    private boolean canwegetthere(Point p1, Point p2){
+    private boolean canwegetthere(Point p1, Point p2, Point p3){
         double dist = Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
-        if(getBattery().capacity <= dist*1.5*POWERCONSUME){
+        double dist2 = Math.abs(p2.x - p3.x) + Math.abs(p2.y - p3.y);
+
+        Measure<Double, Velocity> speed = Measure.valueOf(this.getSpeed(), this.getRoadModel().getSpeedUnit());
+        BaseUnit<Duration> duration = new BaseUnit<Duration>("s");
+
+        Measure<Double, Length> distance = Measure.valueOf(dist, this.getRoadModel().getDistanceUnit());
+        Measure<Double, Length> distance2 = Measure.valueOf(dist2, this.getRoadModel().getDistanceUnit());
+
+        double travelTime = RoadModels.computeTravelTime(speed, distance, duration);
+        travelTime += RoadModels.computeTravelTime(speed, distance2, duration);
+
+        System.out.println(travelTime);
+        System.out.println(getBattery().capacity);
+        if(getBattery().capacity <= travelTime){
+
+            System.out.println("False");
             return false;
         }
         return true;
@@ -107,7 +149,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             if (curr.isPresent())
                 this.target = Optional.of((Parcel) curr.get());
 
-            if(!canwegetthere(position, curr.get().getPickupLocation())){
+            if(!canwegetthere(position, curr.get().getPickupLocation(),curr.get().getDeliveryLocation())){
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
                 Battery battery = getBattery();
                 battery.destination = batteryCharger.position;

@@ -8,22 +8,26 @@ import VisitorClasses.Pheromones.Pheromone_C;
 import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.geom.GeomHeuristics;
 import com.github.rinde.rinsim.geom.Point;
+import edu.uci.ics.jung.graph.event.GraphEvent;
+import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.graph.GraphBuilder;
+import es.usc.citius.hipster.graph.GraphSearchProblem;
+import es.usc.citius.hipster.graph.HipsterGraph;
+import es.usc.citius.hipster.graph.HipsterMutableGraph;
+import es.usc.citius.hipster.model.problem.SearchProblem;
 
 import javax.measure.Measure;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.SI;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static DelgMas.AgvAgent.SPEED;
 
 public class Ant_D extends Ant {
-
     DMASModel dmas;
     Point desti;
     Point origi;
+    HipsterMutableGraph graph =(HipsterMutableGraph) GraphBuilder.<Point,Double>create().createUndirectedGraph();
 
     public Ant_D(AgvModel agvModel, DMASModel dmasModel, Point origi, Point desti) {
         super(agvModel);
@@ -53,28 +57,46 @@ public class Ant_D extends Ant {
             return new LinkedList<>();
         }
 
-        int loops = agv.getRoadModel().getShortestPathTo(origi,desti).size();
-
-        Queue<Point> currSolution;
-        double currDist;
         Point nextPoint = origi;
 
+        while(true){
 
-        do{
-            currSolution = new LinkedList();
-            nextPoint = origi;
-            while (!nextPoint.equals(desti)) {
-                ArrayList<Point> roads = dmas.nodes.get(nextPoint).neighbors;
-                nextPoint = roads.get((int) (Math.random() * (roads.size())));
-                currSolution.add(nextPoint);
-                if(currSolution.size()>loops+delay){
-                    currSolution = null;
-                    break;
-                }
+            graph.add(nextPoint);
+            ArrayList<Point> attempt = dmas.nodes.get(nextPoint).neighbors;
+            for(Point pt : attempt) {
+                graph.add(pt);
+                double dist = Math.sqrt(Math.pow(pt.x - nextPoint.x, 2) + Math.pow(pt.y - nextPoint.y, 2));
+                graph.connect(nextPoint, pt, dist);
             }
-        }while(currSolution==null);
+            nextPoint = attempt.get((int)(Math.random()*attempt.size()));
+            if(nextPoint.equals(desti)){
+                break;
+            }
+        }
 
-        System.out.println(currSolution.size()+ " vs:" + (agv.getRoadModel().getShortestPathTo(origi,desti).size()-1));
-        return currSolution;
+
+        SearchProblem p = GraphSearchProblem
+                .startingFrom(origi)
+                .in(graph)
+                .takeCostsFromEdges()
+                .build();
+        if(delay!=0) {
+            LinkedList solution = (LinkedList) Hipster.createDijkstra(p).search(desti).getOptimalPaths().get(0);
+            graph.remove(Math.random()*solution.size());
+        }
+
+        SearchProblem p2 = GraphSearchProblem
+                .startingFrom(origi)
+                .in(graph)
+                .takeCostsFromEdges()
+                .build();
+
+        LinkedList solution2 = (LinkedList) Hipster.createDijkstra(p2).search(desti).getOptimalPaths().get(0);
+        solution2.remove(0);
+
+        System.out.println("DELAY: " + delay + " Solution: " + solution2 );
+
+        return solution2;
+
     }
 }

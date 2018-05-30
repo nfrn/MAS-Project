@@ -46,12 +46,13 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 
 public final class AgvExample {
     //Elements
-    public static final double VEHICLE_LENGTH = 2.0D;
+    public static final double VEHICLE_LENGTH = 2D;
     public static final int NUM_AGVS = 7;
     public static final int NUM_BOXES = 13;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
+    public static final double PROB_BOX = 0.0001;
     //Positions
     public static List<Point> box_positions;
     public static List<Point> storage_positions;
@@ -164,7 +165,7 @@ public final class AgvExample {
                 //System.out.println(currentTime);
 
                 for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
-                    if(Math.random()<0.05) {
+                    if(Math.random()<PROB_BOX) {
                         boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
                         boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
 

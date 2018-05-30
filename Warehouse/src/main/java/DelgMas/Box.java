@@ -15,8 +15,8 @@ public class Box extends Parcel implements TickListener {
     public static final long DELIVER_MAX_TIME = 50*TICK_LENGTH;
     public static final long DECREASE_STORAGE_TIME = 1;
 
-    public static final int MIN_STORAGE_TIME = (int) (0.5 * TICK_LENGTH);
-    public static final int MAX_STORAGE_TIME = (int) (0.5 * TICK_LENGTH);
+    public static final int MIN_STORAGE_TIME = (int) (0.1 * TICK_LENGTH);
+    public static final int MAX_STORAGE_TIME = (int) (0.1 * TICK_LENGTH);
     boolean finaldestination;
     public boolean isAvailable;
     private long storageTime;

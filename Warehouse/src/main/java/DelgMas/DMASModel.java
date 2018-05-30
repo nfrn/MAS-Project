@@ -28,7 +28,6 @@ import static DelgMas.AgvExample.TICK_LENGTH;
 public class DMASModel implements TickListener, Model<Point> {
 
     private static final long ANT_A_FREQUENCY = 40 * TICK_LENGTH;
-    private static final long PATHS = 5;
     private int clock_A;
     public RoadModel rm;
     public AgvModel am;
@@ -216,6 +215,10 @@ public class DMASModel implements TickListener, Model<Point> {
         for (PheromoneStorage phestore : nodes.values()) {
             phestore.time_passed();
         }
+        for (PheromoneConnectionStorage phestore : connections.values()) {
+            phestore.time_passed();
+        }
+
 
     }
 
