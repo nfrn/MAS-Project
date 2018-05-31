@@ -95,7 +95,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 if(!this.graphRoadModel.getGraph().containsNode(pt))
                     from = this.graphRoadModel.getConnection(agent).get().from();
 
-                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+                Connection c = this.graphRoadModel.getGraph().getConnection(to, from);
                 PheromoneConnectionStorage pcs = connections.get(c);
                 Ant_B antB = new Ant_B(am, tw, agentID);
                 if (pcs.accept(antB) == -1)
@@ -138,7 +138,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 if(!this.graphRoadModel.getGraph().containsNode(to))
                     to = this.graphRoadModel.getConnection(agent).get().to();
 
-                Connection c = this.graphRoadModel.getGraph().getConnection(to, from);
+                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
                 PheromoneConnectionStorage pcs = connections.get(c);
                 Ant_C antC = new Ant_C(am, tw, agentID);
                 pcs.accept(antC);
@@ -205,6 +205,8 @@ public class DMASModel implements TickListener, Model<Point> {
 
     @Override
     public void tick(TimeLapse timeLapse) {
+
+        System.out.println("decrease");
         this.clock_A += timeLapse.getTime();
 
         if (this.clock_A >= ANT_A_FREQUENCY) {
@@ -218,11 +220,6 @@ public class DMASModel implements TickListener, Model<Point> {
         for (PheromoneStorage phestore : nodes.values()) {
             phestore.time_passed();
         }
-        for (PheromoneConnectionStorage phestore : connections.values()) {
-            phestore.time_passed();
-        }
-
-
         for (PheromoneConnectionStorage phestore : connections.values()) {
             phestore.time_passed();
         }

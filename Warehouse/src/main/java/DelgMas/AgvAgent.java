@@ -26,7 +26,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 1;
-    public static final long VISIT_TIME_LENGTH = 2000;
+    public static final long VISIT_TIME_LENGTH = 1500;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
     public static final long INTERVAL_INC = 1;
@@ -73,8 +73,8 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             public int compare(Parcel b1, Parcel b2) {
                 Box b_1 = (Box) b1;
                 Box b_2 = (Box) b2;
-                System.out.println(b_1.finaldestination);
-                System.out.println(b_2.finaldestination);
+//                System.out.println(b_1.finaldestination);
+//                System.out.println(b_2.finaldestination);
                 if (!b_1.isAvailable) {
                     return -1;
                 }
@@ -130,11 +130,11 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         double travelTime = RoadModels.computeTravelTime(speed, distance, duration);
         travelTime += RoadModels.computeTravelTime(speed, distance2, duration);
 
-        System.out.println(travelTime);
-        System.out.println(getBattery().capacity);
+//        System.out.println(travelTime);
+//        System.out.println(getBattery().capacity);
         if (getBattery().capacity <= travelTime) {
 
-            System.out.println("False");
+//            System.out.println("False");
             return false;
         }
         return true;
@@ -250,15 +250,17 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
 //        if(this.ID==0) System.out.println("processing");
+        Queue<Point> queue = new LinkedList<>();
+        List<TimeWindow> tws = new ArrayList<>();
 
         boolean getNewPath = false;
         if (this.currentPath.isPresent() && !this.currentPath.get().isEmpty()) {
 
             Point currPoint = this.getRoadModel().getPosition(this);
 //            Point nearestPoint = currPoint;
-            Queue<Point> queue = new LinkedList<>();
+            queue = new LinkedList<>();
             if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
-//                System.out.println("not on a node!!!!!!!");
+                System.out.println("saved path not on a node!!! " + this.ID);
 //                Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
 //                Point nearestPoint = c.to();
                 queue.add(currPoint);
@@ -268,7 +270,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
             queue.addAll(this.currentPath.get());
 
-            List<TimeWindow> tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
+            tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
             int result = dmasModel.releaseAnts_CheckBooking(queue, tws, this.ID, this);
             if (result == -1)
                 getNewPath = true;
@@ -286,14 +288,14 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             Point currPoint = this.getRoadModel().getPosition(this);
             Point nearestPoint = currPoint;
             if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
-//                System.out.println("not on a node!!!!!!!");
+                System.out.println("getNewPath not on a node!!! " + this.ID);
                 Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
                 nearestPoint = c.to();
             }
 
             int result = -1;
-            List<TimeWindow> tws = new ArrayList<>();
-            Queue<Point> queue = new LinkedList<>();
+            tws = new ArrayList<>();
+            queue = new LinkedList<>();
 
             int i = 0;
             int interval = INTERVAL_BEG;
@@ -312,7 +314,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                     interval += INTERVAL_INC;
                 } else {
                     goSleep = true;
-                    //this.currentPath = Optional.absent();
+                    this.currentPath = Optional.absent();
                     break;
                 }
             }
@@ -323,6 +325,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         }
 
         if (!goSleep) {
+            System.out.println(queue);
             try {
                 this.getRoadModel().followPath(this, this.currentPath.get(), tm);
             } catch (Exception e) {
@@ -378,16 +381,19 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         } else {
             // book the connection
-            System.out.println("not on a node!!!!!!!");
+            if(this.ID == 2)
+                System.out.println();
+
+            System.out.println("current not on a node!!! " + this.ID);
             Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
             Point a = c.from();
-            Point b = currPoint;//c.to();
+            Point b = c.to();
             Queue<Point> q = new LinkedList<>();
             q.add(a);
             q.add(b);
             List<TimeWindow> tws = new ArrayList<>();
             tws.add(TimeWindow.create(Math.max(0, tm.getTime() - VISIT_TIME_LENGTH), Math.max(0, tm.getTime() - VISIT_TIME_LENGTH)));
-            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + VISIT_TIME_LENGTH));
+            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
             this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         }
     }
