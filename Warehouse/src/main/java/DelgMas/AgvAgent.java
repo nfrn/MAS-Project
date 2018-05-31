@@ -26,7 +26,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 1;
-    public static final long VISIT_TIME_LENGTH = 1500;
+    public static final long VISIT_TIME_LENGTH = 2000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
     public static final long INTERVAL_INC = 1;
@@ -393,7 +393,8 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             q.add(b);
             List<TimeWindow> tws = new ArrayList<>();
             tws.add(TimeWindow.create(Math.max(0, tm.getTime() - VISIT_TIME_LENGTH), Math.max(0, tm.getTime() - VISIT_TIME_LENGTH)));
-            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
+//            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
+            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + VISIT_TIME_LENGTH));
             this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         }
     }
