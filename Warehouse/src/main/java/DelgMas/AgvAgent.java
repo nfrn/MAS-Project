@@ -28,7 +28,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 1;
     public static final int SAFETY_INTERVAL = 300;
-    public static final long VISIT_TIME_LENGTH = 2000;
+    public static final long VISIT_TIME_LENGTH = 3000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
     public static final long INTERVAL_INC = 1;
@@ -226,7 +226,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         Queue<Point> queue = new LinkedList<>();
         int i = 0;
         int interval = INTERVAL_BEG;
-        while (result == -1) {
+        while (result != -1) {
             System.out.println("searching path...");
             queue = new LinkedList<>();
             queue.add(currPoint);
@@ -250,6 +250,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             if (interval < INTERVAL_MAX) {
                 interval += INTERVAL_INC;
             } else {
+                System.out.println(result);
                 goSleep = true;
                 this.currentPath = Optional.absent();
                 break;
@@ -260,7 +261,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             dmasModel.releaseAnts_Booking(queue, tws, this.ID, this);
             this.currentPath = Optional.of(queue);
 
-            charger.bookBatteryCharger(tws.get(tws.size() - 1));
+            //charger.bookBatteryCharger(tws.get(tws.size() - 1));
 
             try {
                 this.getRoadModel().followPath(this, queue, tm);
@@ -304,7 +305,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
 
             tws = getTimeWindowsForPath(new ArrayList<Point>(queue), tm);
             int result = dmasModel.releaseAnts_CheckBooking(queue, tws, this.ID, this);
-            if (result == -1)
+            if (result != -1)
                 getNewPath = true;
             else {
                 // rebook the old path
@@ -324,13 +325,13 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 nearestPoint = c.to();
             }
 
-            int result = -1;
+            int result = 0;
             tws = new ArrayList<>();
             queue = new LinkedList<>();
 
             int i = 0;
             int interval = INTERVAL_BEG;
-            while (result == -1) {
+            while (result != -1) {
                 queue = new LinkedList<>();
                 queue.add(currPoint);
                 if (!currPoint.equals(nearestPoint))
@@ -347,7 +348,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 if (interval < INTERVAL_MAX) {
                     interval += INTERVAL_INC;
                 } else {
-                    goSleep = true;
+                    if(result > 0)
+                        System.out.println(result);
+                    goSleep = false;
                     this.currentPath = Optional.absent();
                     break;
                 }

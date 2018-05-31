@@ -79,7 +79,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 Ant_B antB = new Ant_B(am, tws.get(i), agentID);
                 int result = pheroStore.accept(antB);
                 if (result == -1) {
-                    return -1;
+                    return j;
                 }
                 antB = null;
             }
@@ -99,18 +99,14 @@ public class DMASModel implements TickListener, Model<Point> {
                 PheromoneConnectionStorage pcs = connections.get(c);
                 Ant_B antB = new Ant_B(am, tw, agentID);
                 if (pcs.accept(antB) == -1)
-                    return -1;
+                    return j;
 
-//                c = this.graphRoadModel.getGraph().getConnection(to, from);
-//                pcs = connections.get(c);
-//                if (pcs.accept(antB) == -1)
-//                    return -1;
 
                 antB = null;
             }
             i++;
         }
-        return 0;
+        return -1;
     }
 
     public void releaseAnts_BookingOnConnection(Connection c, TimeWindow tw, AgvAgent agent) {
