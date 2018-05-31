@@ -47,7 +47,7 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKIN
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 1.5D;
-    public static final int NUM_AGVS = 10;
+    public static final int NUM_AGVS = 12;
     public static final int NUM_BOXES = 13;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
@@ -292,17 +292,26 @@ public final class AgvExample {
 
 
             //Battery Charge1
+            //Graphs.a
 
-            Graphs.addBiPath(g, new Point(36.0D, 4.0D), (Point) centerMatrix.get(0, 3));
+            Graphs.addBiPath(g, new Point(36.0D, 4.0D), (Point) centerMatrix.get(0, 4));
+            Graphs.addBiPath(g, new Point(32.0D, 4.0D), (Point) centerMatrix.get(0, 2));
+            Graphs.addBiPath(g, new Point(32.0D, 4.0D), new Point(36.0D, 4.0D));
             Graphs.addBiPath(g, new Point(36.0D, 4.0D), new Point(40.0D, 4.0D));
-            Graphs.addBiPath(g, new Point(40.0D, 4.0D), (Point) centerMatrix.get(0, 6));
+            Graphs.addBiPath(g, new Point(40.0D, 4.0D), new Point(44.0D, 4.0D));
+            Graphs.addBiPath(g, new Point(44.0D, 4.0D), (Point) centerMatrix.get(0, 7));
+            Graphs.addBiPath(g, new Point(40.0D, 4.0D), (Point) centerMatrix.get(0, 5));
 
 
             //Battery Charge2
 
-            Graphs.addBiPath(g, new Point(36.0D, 44.0D), (Point) centerMatrix.get(6, 3));
+            Graphs.addBiPath(g, new Point(36.0D, 44.0D), (Point) centerMatrix.get(6, 4));
+            Graphs.addBiPath(g, new Point(32.0D, 44.0D), (Point) centerMatrix.get(6, 2));
+            Graphs.addBiPath(g, new Point(32.0D, 44.0D), new Point(36.0D, 44.0D));
             Graphs.addBiPath(g, new Point(36.0D, 44.0D), new Point(40.0D, 44.0D));
-            Graphs.addBiPath(g, new Point(40.0D, 44.0D), (Point) centerMatrix.get(6, 6));
+            Graphs.addBiPath(g, new Point(40.0D, 44.0D), new Point(44.0D, 44.0D));
+            Graphs.addBiPath(g, new Point(44.0D, 44.0D), (Point) centerMatrix.get(6, 7));
+            Graphs.addBiPath(g, new Point(40.0D, 44.0D), (Point) centerMatrix.get(6, 5));
 
             return new ListenableGraph(g);
         }

@@ -32,7 +32,7 @@ public class Ant_B extends Ant {
         TimeWindow tw = pheromone.node_booking;
         //if (!(!tw.isAfterStart(end) || tw.isBeforeEnd(begin))) {
         if (pheromone.getAgentID() != this.agentID)
-            if (tw.isIn(begin) || tw.isIn(end)) {
+            if (tw.isIn(begin) || tw.isIn(end) || (tw.isBeforeStart(begin) && tw.isAfterEnd(end))) {
                 return -1;
             }
         return 0;

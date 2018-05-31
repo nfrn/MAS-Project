@@ -166,10 +166,10 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay) {
+    public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay, boolean forceMove) {
 
         Ant_D antD = new Ant_D(am, this, orig, desti);
-        return antD.getPath(delay);
+        return antD.getPath(delay, forceMove);
 
     }
 
