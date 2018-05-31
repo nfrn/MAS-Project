@@ -82,7 +82,11 @@ public class Ant_D extends Ant {
                 .build();
         if(delay!=0) {
             LinkedList solution = (LinkedList) Hipster.createDijkstra(p).search(desti).getOptimalPaths().get(0);
-            graph.remove(Math.random()*solution.size());
+            if(delay<25){
+                graph.remove(solution.get((int)(Math.random()*solution.size())));
+            }else{
+                graph.remove(solution.get(0));
+            }
         }
 
         SearchProblem p2 = GraphSearchProblem

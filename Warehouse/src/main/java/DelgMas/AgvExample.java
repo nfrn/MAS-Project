@@ -74,7 +74,7 @@ public final class AgvExample {
 
         Builder viewBuilder = View.builder().with(
                 WarehouseRenderer.builder().withNodes().withMargin(2.0D))
-                .with(AGVRenderer.builder().withDifferentColorsForVehicles())
+                .with(AGVRenderer.builder().withVehicleCoordinates().withDifferentColorsForVehicles())
                 .with(AgvRenderer.builder())
                 .with(BoxRender.builder())
                 .with(RoadUserRenderer.builder()
@@ -121,8 +121,11 @@ public final class AgvExample {
         }
 
         agv_positions = new ArrayList<>();
-        for (int x = 0; x < NUM_AGVS; x++) {
+        for (int x = 0; x < 7; x++) {
             agv_positions.add(new Point(8, (x * 4)*2));
+        }
+        for (int x = 0; x < 7; x++) {
+            agv_positions.add(new Point(68, (x * 4)*2));
         }
 
         box_positions = new ArrayList<>();
@@ -257,9 +260,11 @@ public final class AgvExample {
             Graphs.addBiPath(g, centerMatrix.column(7).values());
             Graphs.addBiPath(g, centerMatrix.column(centerMatrix.columnKeySet().size() - 1).values());
             Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(1, 2), (Point) centerMatrix.get(0, 0)});
-            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(3, 2), (Point) centerMatrix.get(2, 0)});
+            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(3, 2), (Point) centerMatrix.get(1, 0)});
+            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(4, 2), (Point) centerMatrix.get(2, 0)});
             Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(6, 2), (Point) centerMatrix.get(3, 0)});
-            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(9, 2), (Point) centerMatrix.get(4, 0)});
+            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(8, 2), (Point) centerMatrix.get(4, 0)});
+            Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(9, 2), (Point) centerMatrix.get(5, 0)});
             Graphs.addBiPath(g, new Point[]{(Point) leftMatrix.get(11, 2), (Point) centerMatrix.get(6, 0)});
 
             Table<Integer, Integer, Point> rightMatrix = createMatrix(3, 13, new Point(68.0D, 0.0D));
@@ -278,9 +283,11 @@ public final class AgvExample {
 
 
             Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(1, 0), (Point) centerMatrix.get(0, 9)});
-            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(3, 0), (Point) centerMatrix.get(2, 9)});
+            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(3, 0), (Point) centerMatrix.get(1, 9)});
+            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(4, 0), (Point) centerMatrix.get(2, 9)});
             Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(6, 0), (Point) centerMatrix.get(3, 9)});
-            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(9, 0), (Point) centerMatrix.get(4, 9)});
+            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(8, 0), (Point) centerMatrix.get(4, 9)});
+            Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(9, 0), (Point) centerMatrix.get(5, 9)});
             Graphs.addBiPath(g, new Point[]{(Point) rightMatrix.get(11, 0), (Point) centerMatrix.get(6, 9)});
 
 

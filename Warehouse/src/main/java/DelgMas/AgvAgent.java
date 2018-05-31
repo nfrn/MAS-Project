@@ -18,6 +18,7 @@ import javax.measure.quantity.Duration;
 import javax.measure.quantity.Length;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.BaseUnit;
+import java.sql.Time;
 import java.util.*;
 
 import static DelgMas.Battery.CHARGING_DURATION;
@@ -26,7 +27,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     public static final double SPEED = 1;
     private static final int CAPACITY = 2;
     private static final double POWERCONSUME = 1;
-    public static final long VISIT_TIME_LENGTH = 2000;
+    public static final long VISIT_TIME_LENGTH = 3000;
     public static final int INTERVAL_BEG = 0;
     public static final long INTERVAL_MAX = 30;
     public static final long INTERVAL_INC = 1;
@@ -43,7 +44,7 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     private Optional<Parcel> target;
     private Queue<Point> path;
 
-    private int sleep;
+    //private int sleep;
 
     private Optional<Queue<Point>> currentPath;
 
@@ -75,6 +76,15 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                 Box b_2 = (Box) b2;
 //                System.out.println(b_1.finaldestination);
 //                System.out.println(b_2.finaldestination);
+
+                if (!b_1.isBooked() && b_2.isBooked()) {
+                    return 1;
+                }
+                if (b_1.isBooked() && !b_2.isBooked()) {
+                    return -1;
+                }
+
+
                 if (!b_1.isAvailable) {
                     return -1;
                 }
@@ -148,10 +158,14 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             if(box == null)
                 return;
 
+            if(box.isBooked())
+                System.out.println("errorrrrr");
+
+            box.setBooked(true);
+
             Optional<Box> curr = Optional.fromNullable(box);
 
-            if (curr.isPresent())
-                this.target = Optional.of((Parcel) curr.get());
+            this.target = Optional.of((Parcel) curr.get());
 
             if (!canwegetthere(position, curr.get().getPickupLocation(), curr.get().getDeliveryLocation())) {
                 BatteryCharger batteryCharger = RoadModels.findClosestObject(this.getRoadModel().getPosition(this), this.getRoadModel(), BatteryCharger.class);
@@ -218,11 +232,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             }
         }
         if (!goSleep) {
-            // check if battery charger is free ???
-
-//            TimeWindow lastTw = tws.get(tws.size() - 1);
-//            TimeWindow newTw = TimeWindow.create(lastTw.begin(), lastTw.end() + battery.getDeliveryDuration());
-//            tws.set(tws.size() - 1, newTw);
 
             dmasModel.releaseAnts_Booking(queue, tws, this.ID, this);
             this.currentPath = Optional.of(queue);
@@ -232,8 +241,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.getRoadModel().followPath(this, queue, tm);
             this.getBattery().capacity -= POWERCONSUME;
             return true;
-            //} else
-            //    return false;
         } else {
             return false;
         }
@@ -249,7 +256,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             dest = this.target.get().getPickupLocation();
         }
 
-//        if(this.ID==0) System.out.println("processing");
         Queue<Point> queue = new LinkedList<>();
         List<TimeWindow> tws = new ArrayList<>();
 
@@ -257,12 +263,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         if (this.currentPath.isPresent() && !this.currentPath.get().isEmpty()) {
 
             Point currPoint = this.getRoadModel().getPosition(this);
-//            Point nearestPoint = currPoint;
             queue = new LinkedList<>();
             if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
                 System.out.println("saved path not on a node!!! " + this.ID);
-//                Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
-//                Point nearestPoint = c.to();
                 queue.add(currPoint);
             } else if (!((LinkedList) this.currentPath.get()).getFirst().equals(currPoint)) {
                 queue.add(currPoint);
@@ -284,7 +287,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             getNewPath = true;
 
         if (getNewPath) {
-            //List<Point> shortestPathTo = this.getRoadModel().getShortestPathTo(this, dest);
             Point currPoint = this.getRoadModel().getPosition(this);
             Point nearestPoint = currPoint;
             if (!this.dmasModel.graphRoadModel.getGraph().containsNode(currPoint)) {
@@ -300,7 +302,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             int i = 0;
             int interval = INTERVAL_BEG;
             while (result == -1) {
-//                System.out.println("searching path...");
                 queue = new LinkedList<>();
                 queue.add(currPoint);
                 if (!currPoint.equals(nearestPoint))
@@ -343,7 +344,6 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
         List<TimeWindow> timeWindows = new ArrayList<>();
 
         long addTime = tm.getTime();
-        //if (this.dmasModel.graphRoadModel.getGraph().containsNode(path.get(0)))
         timeWindows.add(TimeWindow.create(addTime, addTime + VISIT_TIME_LENGTH));
 
         for (int i = 0; i < path.size() - 1; i++) {
@@ -381,10 +381,21 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
         } else {
             // book the connection
-            if(this.ID == 2)
-                System.out.println();
 
-            System.out.println("current not on a node!!! " + this.ID);
+            Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
+            this.dmasModel.releaseAnts_BookingOnConnection(c,
+                    TimeWindow.create(tm.getTime(), tm.getTime()+VISIT_TIME_LENGTH), this);
+
+            List<TimeWindow> nextTws = new ArrayList<>();
+            nextTws.add(TimeWindow.create(tm.getTime(), tm.getTime() + VISIT_TIME_LENGTH));
+            Queue<Point> q = new LinkedList<>();
+            q.add(c.to());
+            if (this.dmasModel.releaseAnts_CheckBooking(q, nextTws, this.ID, this) != -1) {
+                // next is not booked, then book it
+                this.dmasModel.releaseAnts_Booking(q, nextTws, this.ID, this);
+                System.out.println("book node " + c.to() + " by AGV " + this.ID);
+            }
+            /*
             Connection c = this.dmasModel.graphRoadModel.getConnection(this).get();
             Point a = c.from();
             Point b = c.to();
@@ -393,9 +404,17 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
             q.add(b);
             List<TimeWindow> tws = new ArrayList<>();
             tws.add(TimeWindow.create(Math.max(0, tm.getTime() - VISIT_TIME_LENGTH), Math.max(0, tm.getTime() - VISIT_TIME_LENGTH)));
-//            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
-            tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + VISIT_TIME_LENGTH));
+            Queue<Point> nextPosition = new LinkedList<>();
+            List<TimeWindow> nextTws = new ArrayList<>();
+            nextPosition.add(b);
+            nextTws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
+            // TODO heck if next is free reserve it...
+            if (this.dmasModel.releaseAnts_CheckBooking(nextPosition, nextTws, this.ID, this) != -1)
+                tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + 2 * VISIT_TIME_LENGTH));
+            else tws.add(TimeWindow.create(Math.max(0, tm.getTime() - VISIT_TIME_LENGTH), Math.max(0, tm.getTime() - VISIT_TIME_LENGTH)));
+//            else tws.add(TimeWindow.create(tm.getTime() + VISIT_TIME_LENGTH, tm.getTime() + VISIT_TIME_LENGTH));
             this.dmasModel.releaseAnts_Booking(q, tws, this.ID, this);
+            */
         }
     }
 
@@ -408,10 +427,10 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
     protected void tickImpl(TimeLapse timeLapse) {
         //First task is every agent to load the battery they have.
         //Battery battery = getBattery();
-        if(this.ID == 2)
-            System.out.println();
-        if(this.ID == 5)
-            System.out.println();
+//        if(this.ID == 2)
+//            System.out.println();
+//        if(this.ID == 5)
+//            System.out.println();
 
         this.bookCurrentPosition(timeLapse);
 
@@ -439,13 +458,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                     target = Optional.absent();
                 } else if (this.agvModel.containerContains(this, target.get())) {
                     boolean success = moveBox(timeLapse);
-                    if (!success)
-                        this.sleep = SLEEP_DURATION;
                 } else {
                     if (getRoadModel().containsObject(target.get())) {
                         boolean success = moveBox(timeLapse);
-                        if (!success)
-                            this.sleep = SLEEP_DURATION;
                     } else {
                         target = Optional.absent();
                     }
@@ -458,13 +473,9 @@ public class AgvAgent extends Vehicle implements TickListener, RoadUser {
                     target = Optional.absent();
                 } else if (this.agvModel.containerContains(this, target.get())) {
                     boolean success = moveBattery(timeLapse);
-                    if (!success)
-                        this.sleep = SLEEP_DURATION;
                 } else {
                     if (getRoadModel().containsObject(target.get())) {
                         boolean success = moveBattery(timeLapse);
-                        if (!success)
-                            this.sleep = SLEEP_DURATION;
                     } else {
                         target = Optional.absent();
                     }

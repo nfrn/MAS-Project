@@ -21,6 +21,8 @@ public class Box extends Parcel implements TickListener {
     public boolean isAvailable;
     private long storageTime;
 
+    private boolean booked;
+
     public Box(Point ori, Point dest, long createdTime,boolean finaldestination) {
 
         super(Parcel.builder(ori,
@@ -32,6 +34,7 @@ public class Box extends Parcel implements TickListener {
                 .buildDTO());
 
         this.isAvailable = true;
+        this.booked = false;
         this.finaldestination = finaldestination;
     }
 
@@ -53,6 +56,14 @@ public class Box extends Parcel implements TickListener {
 
     public long getStorageTime() {
         return storageTime;
+    }
+
+    public boolean isBooked() {
+        return booked;
+    }
+
+    public void setBooked(boolean booked) {
+        this.booked = booked;
     }
 
     @Override

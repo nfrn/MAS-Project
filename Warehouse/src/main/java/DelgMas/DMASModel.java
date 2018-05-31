@@ -113,6 +113,12 @@ public class DMASModel implements TickListener, Model<Point> {
         return 0;
     }
 
+    public void releaseAnts_BookingOnConnection(Connection c, TimeWindow tw, AgvAgent agent) {
+        PheromoneConnectionStorage pcs = connections.get(c);
+        Ant_C antC = new Ant_C(am, tw, agent.ID);
+        pcs.accept(antC);
+    }
+
     public void releaseAnts_Booking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and tell to book it
         //System.out.println("Ants_C released");
@@ -128,7 +134,7 @@ public class DMASModel implements TickListener, Model<Point> {
             if(j+1 < pathList.size()) {
                 Point to = pathList.get(j+1);
                 TimeWindow next_tw = tws.get(i+1);
-                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
+                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + 2 * AgvAgent.VISIT_TIME_LENGTH;
                 TimeWindow tw = TimeWindow.create(Math.max(0, tws.get(i).end() - AgvAgent.VISIT_TIME_LENGTH), end + AgvAgent.VISIT_TIME_LENGTH);
 
                 Point from = pt;
