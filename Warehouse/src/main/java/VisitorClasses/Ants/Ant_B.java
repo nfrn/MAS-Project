@@ -48,10 +48,12 @@ public class Ant_B extends Ant {
         long begin = this.timeWindow.begin();
         long end = this.timeWindow.end();
         TimeWindow tw = pheromone.connection_booking;
-        if (pheromone.getAgentID() != this.agentID)
+        if (pheromone.getAgentID() != this.agentID) {
+            System.out.println("check conn timewindow + "+ tw + " and " + this.timeWindow);
             if (tw.isIn(begin) || tw.isIn(end) || (tw.isBeforeStart(begin) && tw.isAfterEnd(end))) {
                 return -1;
             }
+        }
         return 0;
     }
 

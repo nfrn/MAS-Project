@@ -49,6 +49,7 @@ public class Box extends Parcel implements TickListener {
                 .buildDTO());
 
         this.isAvailable = false;
+        this.booked = false;
         this.finaldestination = finaldestination;
         this.storageTime = MIN_STORAGE_TIME + storageTime;
 

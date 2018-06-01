@@ -6,8 +6,10 @@ import VisitorClasses.Ants.Ant_A;
 import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
 import VisitorClasses.Ants.Ant_D;
+import VisitorClasses.Pheromones.PheromoneConnectionBooking;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Ants.*;
+import VisitorClasses.Pheromones.Pheromone_B;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -64,6 +66,45 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
+    public void release_booking(Queue<Point> path, AgvAgent agent) {
+        List<Point> pathList = new ArrayList<>(path);
+
+        int i = 0;
+        for (int j = 0; j < pathList.size(); j++) {
+            Point pt = pathList.get(j);
+
+            PheromoneStorage pheroStore = nodes.get(pt);
+            // check if the node is booked
+            if (pheroStore != null) {
+
+                for(Iterator<Pheromone_B> iter = pheroStore.list_phero_B.iterator(); iter.hasNext(); ) {
+                    Pheromone_B phero = iter.next();
+                    if(phero.getAgentID() == agent.ID)
+                        iter.remove();
+                }
+
+                System.out.print("");
+            }
+
+            if(j+1 < pathList.size()) {
+                Point to = pathList.get(j + 1);
+
+                Point from = pt;
+                if(!this.graphRoadModel.getGraph().containsNode(pt))
+                    from = this.graphRoadModel.getConnection(agent).get().from();
+
+                Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+                PheromoneConnectionStorage pcs = connections.get(c);
+
+                for(Iterator<PheromoneConnectionBooking> iter = pcs.list_phero_Connection_Booking.iterator(); iter.hasNext(); ) {
+                    PheromoneConnectionBooking phero = iter.next();
+                    if(phero.getAgentID() == agent.ID)
+                        iter.remove();
+                }
+            }
+        }
+    }
+
     public int releaseAnts_CheckBooking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and check if it is free
         //System.out.println("Ants_B released");
@@ -88,8 +129,9 @@ public class DMASModel implements TickListener, Model<Point> {
             if(j+1 < pathList.size()) {
                 Point to = pathList.get(j + 1);
                 TimeWindow next_tw = tws.get(i+1);
-                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + AgvAgent.VISIT_TIME_LENGTH;
-                TimeWindow tw = TimeWindow.create(tws.get(i).end(), end);
+                long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + 2 * AgvAgent.VISIT_TIME_LENGTH;
+                TimeWindow tw = TimeWindow.create(Math.max(0, tws.get(i).end() - 2 * AgvAgent.VISIT_TIME_LENGTH), end + 2 * AgvAgent.VISIT_TIME_LENGTH);
+
 
                 Point from = pt;
                 if(!this.graphRoadModel.getGraph().containsNode(pt))
@@ -131,7 +173,7 @@ public class DMASModel implements TickListener, Model<Point> {
                 Point to = pathList.get(j+1);
                 TimeWindow next_tw = tws.get(i+1);
                 long end = next_tw.begin() > tws.get(i).end() ? next_tw.begin() : tws.get(i).end() + 2 * AgvAgent.VISIT_TIME_LENGTH;
-                TimeWindow tw = TimeWindow.create(Math.max(0, tws.get(i).end() - AgvAgent.VISIT_TIME_LENGTH), end + AgvAgent.VISIT_TIME_LENGTH);
+                TimeWindow tw = TimeWindow.create(Math.max(0, tws.get(i).end() - 2 * AgvAgent.VISIT_TIME_LENGTH), end + 2 * AgvAgent.VISIT_TIME_LENGTH);
 
                 Point from = pt;
                 if(!this.graphRoadModel.getGraph().containsNode(pt))
@@ -178,7 +220,12 @@ public class DMASModel implements TickListener, Model<Point> {
     }
 
     public PheromoneConnectionStorage getConnection(Point from, Point to) {
-        return this.connections.get(this.graphRoadModel.getGraph().getConnection(from, to));
+        try {
+            Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
+            return this.connections.get(c);
+        }catch (Exception e) {
+            return null;
+        }
     }
 
     //**

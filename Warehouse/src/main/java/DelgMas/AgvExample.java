@@ -52,7 +52,7 @@ public final class AgvExample {
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
-    public static final double PROB_BOX = 0.01;
+    public static final double PROB_BOX = 1;
     //Positions
     public static List<Point> box_positions;
     public static List<Point> storage_positions;

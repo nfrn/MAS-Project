@@ -27,7 +27,7 @@ public class Ant_D extends Ant {
     DMASModel dmas;
     Point desti;
     Point origi;
-    HipsterMutableGraph graph =(HipsterMutableGraph) GraphBuilder.<Point,Double>create().createUndirectedGraph();
+    HipsterMutableGraph graph = (HipsterMutableGraph) GraphBuilder.<Point, Double>create().createUndirectedGraph();
 
     public Ant_D(AgvModel agvModel, DMASModel dmasModel, Point origi, Point desti) {
         super(agvModel);
@@ -53,39 +53,40 @@ public class Ant_D extends Ant {
 
     public Queue<Point> getPath(int delay, boolean forceMove) {
 
-        if(origi.equals(desti)){
-            return new LinkedList<>();
+        if (origi.equals(desti)) {
+            return null;
+            //return new LinkedList<>();
         }
 
         Point nextPoint = origi;
 
-        while(true){
+        int result = 0;
+        while (result < 150) {
 
-            graph.add(nextPoint);
+            if(graph.add(nextPoint))
+                result++;
+
             ArrayList<Point> attempt = dmas.nodes.get(nextPoint).neighbors;
-            for(Point pt : attempt) {
-                graph.add(pt);
-                double dist = Math.sqrt(Math.pow(pt.x - nextPoint.x, 2) + Math.pow(pt.y - nextPoint.y, 2));
+            for (Point pt : attempt) {
+                if(graph.add(pt))
+                    result++;
+                double dist = Point.distance(pt, nextPoint);
                 graph.connect(nextPoint, pt, dist);
             }
-            nextPoint = attempt.get((int)(Math.random()*attempt.size()));
-            if(nextPoint.equals(desti)){
-                break;
-            }
+            nextPoint = attempt.get((int) (Math.random() * attempt.size()));
         }
-
 
         SearchProblem p = GraphSearchProblem
                 .startingFrom(origi)
                 .in(graph)
                 .takeCostsFromEdges()
                 .build();
-        if(delay!=0) {
+        if (delay != 0)
+
+        {
             LinkedList solution = (LinkedList) Hipster.createDijkstra(p).search(desti).getOptimalPaths().get(0);
-            if(delay<25){
-                graph.remove(solution.get((int)(Math.random()*solution.size())));
-            }else{
-                graph.remove(solution.get(0));
+            if (delay < 25) {
+                graph.remove(solution.get((int) (Math.random() * (solution.size()-1))));
             }
         }
 
@@ -98,7 +99,9 @@ public class Ant_D extends Ant {
         LinkedList solution2 = (LinkedList) Hipster.createDijkstra(p2).search(desti).getOptimalPaths().get(0);
         solution2.remove(0);
 
-        if (forceMove) {
+        if (forceMove)
+
+        {
             int cutTo = solution2.size() - 3;
             for (int i = 0; i < cutTo; i++) {
                 solution2.removeLast();
