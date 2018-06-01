@@ -7,7 +7,6 @@ import VisitorClasses.Ants.Ant_B;
 import VisitorClasses.Ants.Ant_C;
 import VisitorClasses.Ants.Ant_D;
 import VisitorClasses.Pheromones.PheromoneConnectionBooking;
-import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Ants.*;
 import VisitorClasses.Pheromones.Pheromone_B;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
@@ -59,7 +58,6 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public void releaseAnts_A() {
         //Go to chargers and see their availabiliy. Register that in Pheromone_A
-        //System.out.println("Ants_A released");
         Ant_A antA = new Ant_A(am);
         for (PheromoneStorage pheroStore : nodes.values()) {
             pheroStore.accept(antA);
@@ -82,8 +80,6 @@ public class DMASModel implements TickListener, Model<Point> {
                     if(phero.getAgentID() == agent.ID)
                         iter.remove();
                 }
-
-                System.out.print("");
             }
 
             if(j+1 < pathList.size()) {
@@ -107,7 +103,6 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public int releaseAnts_CheckBooking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and check if it is free
-        //System.out.println("Ants_B released");
         List<Point> pathList = new ArrayList<>(path);
 
         int i = 0;
@@ -159,7 +154,6 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public void releaseAnts_Booking(Queue<Point> path, List<TimeWindow> tws, int agentID, AgvAgent agent) {
         //Go to Path and tell to book it
-        //System.out.println("Ants_C released");
 
         List<Point> pathList = new ArrayList<>(path);
 
@@ -187,10 +181,6 @@ public class DMASModel implements TickListener, Model<Point> {
                 Ant_C antC = new Ant_C(am, tw, agentID);
                 pcs.accept(antC);
 
-//                c = this.graphRoadModel.getGraph().getConnection(to, from);
-//                pcs = connections.get(c);
-//                pcs.accept(antC);
-
                 antC = null;
             }
 
@@ -204,10 +194,10 @@ public class DMASModel implements TickListener, Model<Point> {
         }
     }
 
-    public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay, boolean forceMove) {
+    public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay) {
 
         Ant_D antD = new Ant_D(am, this, orig, desti);
-        return antD.getPath(delay, forceMove);
+        return antD.getPath(delay);
 
     }
 
@@ -255,7 +245,6 @@ public class DMASModel implements TickListener, Model<Point> {
     @Override
     public void tick(TimeLapse timeLapse) {
 
-        System.out.println("decrease");
         this.clock_A += timeLapse.getTime();
 
         if (this.clock_A >= ANT_A_FREQUENCY) {

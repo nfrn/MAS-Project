@@ -1,7 +1,3 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
 
 package DelgMas;
 
@@ -9,7 +5,6 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.Depot;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
-import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
@@ -17,7 +12,6 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.*;
-import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioController;
@@ -26,23 +20,15 @@ import com.github.rinde.rinsim.ui.View.Builder;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.ui.renderers.WarehouseRenderer;
-import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
 
-import javax.measure.quantity.Duration;
 import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.AVAILABLE;
-import static com.github.rinde.rinsim.core.model.pdp.PDPModel.ParcelState.PICKING_UP;
 
 public final class AgvExample {
     //Elements
@@ -60,7 +46,7 @@ public final class AgvExample {
     public static List<Point> depot_positions;
     public static List<Point> agv_positions;
     //Time
-    public static final long TICK_LENGTH= 1000;
+    public static final long TICK_LENGTH = 1000;
 
     private AgvExample() {
     }
@@ -91,8 +77,8 @@ public final class AgvExample {
         final Simulator sim = Simulator.builder()
                 .setTickLength(TICK_LENGTH)
                 .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createGraph())
-                .withCollisionAvoidance().withDistanceUnit(SI.METER)
-                .withVehicleLength(VEHICLE_LENGTH))
+                        .withCollisionAvoidance().withDistanceUnit(SI.METER)
+                        .withVehicleLength(VEHICLE_LENGTH))
                 .addModel(AgvModel.builder())
                 .addModel(DMASModel.builder())
                 .addModel(ScenarioController.builder(Scenario.builder()
@@ -122,10 +108,10 @@ public final class AgvExample {
 
         agv_positions = new ArrayList<>();
         for (int x = 0; x < 7; x++) {
-            agv_positions.add(new Point(8, (x * 4)*2));
+            agv_positions.add(new Point(8, (x * 4) * 2));
         }
         for (int x = 0; x < 7; x++) {
-            agv_positions.add(new Point(68, (x * 4)*2));
+            agv_positions.add(new Point(68, (x * 4) * 2));
         }
 
         box_positions = new ArrayList<>();
@@ -133,16 +119,16 @@ public final class AgvExample {
             box_positions.add(new Point(0, x * 4));
         }
         charger_positions = new ArrayList<>();
-        charger_positions.add(new Point(36.0D,4.0D));
-        charger_positions.add(new Point(36.0D,44.0D));
-        charger_positions.add(new Point(40.0D,4.0D));
-        charger_positions.add(new Point(40.0D,44.0D));
+        charger_positions.add(new Point(36.0D, 4.0D));
+        charger_positions.add(new Point(36.0D, 44.0D));
+        charger_positions.add(new Point(40.0D, 4.0D));
+        charger_positions.add(new Point(40.0D, 44.0D));
 
         //Register
         for (int i = 0; i < NUM_BOXES; ++i) {
             sim.register(new Box(box_positions.get(i),
-                    storage_positions.get(rng.nextInt(storage_positions.size())), 0,false));
-            }
+                    storage_positions.get(rng.nextInt(storage_positions.size())), 0, false));
+        }
 
         for (Point loc : depot_positions) {
             sim.register(new Depot(loc));
@@ -154,7 +140,7 @@ public final class AgvExample {
 
         for (int i = 0; i < NUM_AGVS; ++i) {
             Point position = agv_positions.get(i);
-            sim.register(new AgvAgent(position, rng, agvModel,dmasModel, i));
+            sim.register(new AgvAgent(position, rng, agvModel, dmasModel, i));
             sim.register(new Battery(position));
         }
 
@@ -165,15 +151,13 @@ public final class AgvExample {
 
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
-                //System.out.println(currentTime);
 
                 for (Parcel parcel : agvModel.getParcels(PDPModel.ParcelState.IN_CARGO)) {
-                    if(Math.random()<PROB_BOX) {
+                    if (Math.random() < PROB_BOX) {
                         boolean is_beg = this.was_from_begining(parcel.getPickupLocation());
                         boolean is_anything_there = this.is_anything_there(parcel.getPickupLocation());
 
                         if (is_beg && !is_anything_there) {
-                            //System.out.println("Added in fountain");
                             sim.register(new Box(new Point(parcel.getPickupLocation().x, parcel.getPickupLocation().y),
                                     storage_positions.get(rng.nextInt(storage_positions.size())), currentTime, false));
                         }
@@ -183,20 +167,20 @@ public final class AgvExample {
 
             }
 
-            public boolean is_anything_there(Point orig){
-                for(RoadUser ruser: roadModel.getObjects()){
-                    if(roadModel.getPosition(ruser).equals(orig)){
+            public boolean is_anything_there(Point orig) {
+                for (RoadUser ruser : roadModel.getObjects()) {
+                    if (roadModel.getPosition(ruser).equals(orig)) {
                         return true;
                     }
                 }
                 return false;
             }
 
-            public boolean was_from_begining(Point orig){
+            public boolean was_from_begining(Point orig) {
                 boolean is_from_there = false;
-                for(Point position : box_positions){
-                    if(orig.equals(position)){
-                        is_from_there= true;
+                for (Point position : box_positions) {
+                    if (orig.equals(position)) {
+                        is_from_there = true;
                     }
                 }
                 return is_from_there;

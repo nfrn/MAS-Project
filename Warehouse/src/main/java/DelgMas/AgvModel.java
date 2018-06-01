@@ -12,21 +12,13 @@ import com.github.rinde.rinsim.core.model.pdp.*;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.auto.value.AutoValue;
-import DelgMas.AutoValue_AgvModel_Builder;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-
-import static DelgMas.AgvExample.NUM_AGVS;
-import static DelgMas.AgvExample.NUM_BOXES;
 import static DelgMas.Battery.CHARGING_DURATION;
 
 
@@ -55,11 +47,10 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         this.unregister(box);
         if (box.finaldestination) {
             return;
-        } else {//if (roadModel.getObjectsOfType(Parcel.class).size() <= NUM_BOXES + NUM_AGVS) {
+        } else {
             long currentTime = timeLapse.getTime();
             Box newBox = new Box(loc,
                     depot_locations.get(rng.nextInt(AgvExample.NUM_DEPOTS)), currentTime, true, rng.nextInt(Box.MAX_STORAGE_TIME));
-            //newBox.
             simulator.register(newBox);
         }
     }

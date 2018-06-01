@@ -21,7 +21,6 @@ public class RoadDataPanel extends JFrame implements EventListener {
         this.store=nodes;
         this.dmasModel=dmasModel;
         this.size = nodes.size();
-        System.out.println(size);
 
         infoPanel = new JPanel(new GridBagLayout());
         writePanel(infoPanel);

@@ -5,10 +5,7 @@ import VisitorClasses.Pheromones.PheromoneConnectionBooking;
 import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
-import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
-
-import java.util.Queue;
 
 public class Ant_B extends Ant {
     private TimeWindow timeWindow;
@@ -30,7 +27,6 @@ public class Ant_B extends Ant {
         long begin = this.timeWindow.begin();
         long end = this.timeWindow.end();
         TimeWindow tw = pheromone.node_booking;
-        //if (!(!tw.isAfterStart(end) || tw.isBeforeEnd(begin))) {
         if (pheromone.getAgentID() != this.agentID)
             if (tw.isIn(begin) || tw.isIn(end) || (tw.isBeforeStart(begin) && tw.isAfterEnd(end))) {
                 return -1;
@@ -49,7 +45,6 @@ public class Ant_B extends Ant {
         long end = this.timeWindow.end();
         TimeWindow tw = pheromone.connection_booking;
         if (pheromone.getAgentID() != this.agentID) {
-            System.out.println("check conn timewindow + "+ tw + " and " + this.timeWindow);
             if (tw.isIn(begin) || tw.isIn(end) || (tw.isBeforeStart(begin) && tw.isAfterEnd(end))) {
                 return -1;
             }

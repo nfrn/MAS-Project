@@ -51,11 +51,10 @@ public class Ant_D extends Ant {
 
     }
 
-    public Queue<Point> getPath(int delay, boolean forceMove) {
+    public Queue<Point> getPath(int delay) {
 
         if (origi.equals(desti)) {
             return null;
-            //return new LinkedList<>();
         }
 
         Point nextPoint = origi;
@@ -98,15 +97,6 @@ public class Ant_D extends Ant {
 
         LinkedList solution2 = (LinkedList) Hipster.createDijkstra(p2).search(desti).getOptimalPaths().get(0);
         solution2.remove(0);
-
-        if (forceMove)
-
-        {
-            int cutTo = solution2.size() - 3;
-            for (int i = 0; i < cutTo; i++) {
-                solution2.removeLast();
-            }
-        }
 
         return solution2;
 

@@ -1,6 +1,5 @@
 package VisitorClasses.Ants;
 
-import DelgMas.AgvAgent;
 import DelgMas.AgvModel;
 import DelgMas.PheromoneStorage;
 import VisitorClasses.Pheromones.PheromoneConnectionBooking;
@@ -8,8 +7,6 @@ import VisitorClasses.Pheromones.Pheromone_A;
 import VisitorClasses.Pheromones.Pheromone_B;
 import VisitorClasses.Pheromones.Pheromone_C;
 import com.github.rinde.rinsim.util.TimeWindow;
-
-import java.rmi.server.UID;
 
 public class Ant_C extends Ant {
     private TimeWindow timeWindow;
@@ -43,7 +40,6 @@ public class Ant_C extends Ant {
 
     @Override
     public void dropPheromone(Pheromone_C pheromone) {
-        //System.out.println("Node: " + pheromone.position + " knows that it is booked:" + pheromone.node_booking);
     }
 
     public TimeWindow getTimeWindow() {
