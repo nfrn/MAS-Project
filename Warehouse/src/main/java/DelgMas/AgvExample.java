@@ -35,13 +35,13 @@ import java.util.Map;
 public final class AgvExample {
     //Elements
     public static final double VEHICLE_LENGTH = 1.5D;
-    public static final int NUM_AGVS = 12;
+    public static int NUM_AGVS = 12;
     public static final int NUM_BOXES = 13;
     public static final int NUM_BATTERY = 4;
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
     public static final double PROB_BOX = 1;
-    public static final int TEST_MINUTE_TIME = 60*10;
+    public static int TEST_TIME = 60*10*60*1000;
     //Positions
     public static List<Point> box_positions;
     public static List<Point> storage_positions;
@@ -51,7 +51,14 @@ public final class AgvExample {
     //Time
     public static final long TICK_LENGTH = 1000;
 
-    private AgvExample() {
+    public AgvExample() {
+        TEST_TIME = 10*60*60*1000;
+        NUM_AGVS = 1;
+    }
+
+    public AgvExample(int numAVGs, int time) {
+        TEST_TIME = time;
+        NUM_AGVS = numAVGs;
     }
 
     public static void main(String[] args) {
@@ -76,7 +83,7 @@ public final class AgvExample {
                 .withTitleAppendix("AGV example")
                 //.with(StatsPanel.builder())
                 .withResolution(1300, 1000)
-                .withSpeedUp(100);
+                .withSpeedUp(1000);
 
         final Simulator sim = Simulator.builder()
                 .setTickLength(TICK_LENGTH)
@@ -88,7 +95,7 @@ public final class AgvExample {
                 .addModel(ScenarioController.builder(Scenario.builder()
                         .build()))
                 .addModel(StatsTracker.builder())
-                //.addModel(viewBuilder)
+//                .addModel(viewBuilder)
                 .build();
         final RandomGenerator rng = sim.getRandomGenerator();
 
@@ -170,7 +177,7 @@ public final class AgvExample {
 
                 }
 
-                if (sim.getCurrentTime() > 60*60*1000) { //TEST_MINUTE_TIME
+                if (sim.getCurrentTime() > TEST_TIME) { //TEST_MINUTE_TIME*60*1000
                     print_stats(agvModel, statsTracker.getStatistics());
                     sim.stop();
                 }
@@ -206,9 +213,8 @@ public final class AgvExample {
         long startTime = System.nanoTime();
         sim.start();
         long endTime = System.nanoTime();
-
         long duration = (endTime - startTime);
-        System.out.println("time spent on test " + duration);
+        System.out.println("time spent on test " + duration/1000000000);
     }
 
     public static void print_stats(AgvModel agvModel, StatisticsDTO stats) {

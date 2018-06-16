@@ -251,7 +251,7 @@ public class DMASModel implements TickListener, Model<Point> {
             this.clock_A = 0;
             this.releaseAnts_A();
             this.releaseAnts_Boxs_Info();
-            this.stringListener.inputEmitted(new ArrayList<PheromoneStorage>(nodes.values()));
+            //this.stringListener.inputEmitted(new ArrayList<PheromoneStorage>(nodes.values()));
             am.taskListener.inputEmitted(am.getBoxes());
         }
 
