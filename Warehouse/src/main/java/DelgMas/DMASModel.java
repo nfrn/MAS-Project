@@ -53,7 +53,7 @@ public class DMASModel implements TickListener, Model<Point> {
         }
 
         this.releaseAnts_Boxs_Info();
-        createUi(this);
+        //createUi(this);
     }
 
     public void releaseAnts_A() {
@@ -252,7 +252,7 @@ public class DMASModel implements TickListener, Model<Point> {
             this.releaseAnts_A();
             this.releaseAnts_Boxs_Info();
             //this.stringListener.inputEmitted(new ArrayList<PheromoneStorage>(nodes.values()));
-            am.taskListener.inputEmitted(am.getBoxes());
+            //am.taskListener.inputEmitted(am.getBoxes());
         }
 
         for (PheromoneStorage phestore : nodes.values()) {

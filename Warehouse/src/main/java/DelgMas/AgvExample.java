@@ -214,12 +214,13 @@ public final class AgvExample {
         sim.start();
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
-        System.out.println("time spent on test " + duration/1000000000);
+        //System.out.println("time spent on test " + duration/1000000000);
     }
 
     public static void print_stats(AgvModel agvModel, StatisticsDTO stats) {
-        System.out.println("TOTAL DELIVERED BOXES: " + agvModel.delivered_boxes);
-        System.out.println(stats.toString());
+//        System.out.println("TOTAL DELIVERED BOXES: " + agvModel.delivered_boxes);
+//        System.out.println(stats.toString());
+        System.out.printf("%d\t%f\t%d\n", NUM_AGVS, stats.totalDistance,agvModel.delivered_boxes);
     }
 
 

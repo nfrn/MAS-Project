@@ -36,7 +36,7 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         depot_locations = new ArrayList<>();
         for (int i = 0; i < AgvExample.NUM_DEPOTS; ++i)
             depot_locations.add(new Point(76, i * 12));
-        createUi(this);
+        //createUi(this);
         delivered_boxes = 0;
     }
 

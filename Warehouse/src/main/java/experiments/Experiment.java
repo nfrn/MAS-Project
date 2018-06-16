@@ -8,10 +8,10 @@ import DelgMas.AgvExample;
 public class Experiment {
 
     public static void main(String[] args) {
-
-        for (int i = 0; i < 4; i++) {
+        int[] avg_nums = {1,3,6,9,12};
+        for (int avg_num : avg_nums) {
             for (int j = 0; j < 5; j++) {
-                AgvExample test = new AgvExample(1, 3*60*60*1000);
+                AgvExample test = new AgvExample(avg_num, 3*60*60*1000);
                 test.run(false);
             }
         }
