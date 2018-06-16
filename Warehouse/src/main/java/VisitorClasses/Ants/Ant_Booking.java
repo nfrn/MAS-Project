@@ -2,17 +2,20 @@ package VisitorClasses.Ants;
 
 import DelgMas.AgvModel;
 import DelgMas.PheromoneStorage;
-import VisitorClasses.Pheromones.PheromoneConnectionBooking;
+import VisitorClasses.Pheromones.Pheromone_Connection_Booking;
 import VisitorClasses.Pheromones.Pheromone_A;
-import VisitorClasses.Pheromones.Pheromone_B;
-import VisitorClasses.Pheromones.Pheromone_C;
+import VisitorClasses.Pheromones.Pheromone_Node_Booking;
+import VisitorClasses.Pheromones.Pheromone_Boxes_Info;
 import com.github.rinde.rinsim.util.TimeWindow;
 
-public class Ant_C extends Ant {
+/**
+ * Booking ant
+ */
+public class Ant_Booking extends Ant {
     private TimeWindow timeWindow;
     private int agentID;
 
-    public Ant_C(AgvModel agvModel, TimeWindow tw, int agentID) {
+    public Ant_Booking(AgvModel agvModel, TimeWindow tw, int agentID) {
         super(agvModel);
         this.timeWindow = tw;
         this.agentID = agentID;
@@ -24,14 +27,14 @@ public class Ant_C extends Ant {
     }
 
     @Override
-    public int dropPheromone(Pheromone_B pheromone) {
+    public int dropPheromone(Pheromone_Node_Booking pheromone) {
         pheromone.lifetime = PheromoneStorage.LIFETIME_B;
         pheromone.node_booking = this.getTimeWindow();
         return 0;
     }
 
     @Override
-    public int dropPheromone(PheromoneConnectionBooking pheromone) {
+    public int dropPheromone(Pheromone_Connection_Booking pheromone) {
         pheromone.lifetime = PheromoneStorage.LIFETIME_B;
         pheromone.connection_booking = this.getTimeWindow();
 
@@ -39,7 +42,7 @@ public class Ant_C extends Ant {
     }
 
     @Override
-    public void dropPheromone(Pheromone_C pheromone) {
+    public void dropPheromone(Pheromone_Boxes_Info pheromone) {
     }
 
     public TimeWindow getTimeWindow() {

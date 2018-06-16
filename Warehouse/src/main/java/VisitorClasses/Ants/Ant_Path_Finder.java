@@ -3,33 +3,24 @@ package VisitorClasses.Ants;
 import DelgMas.AgvModel;
 import DelgMas.DMASModel;
 import VisitorClasses.Pheromones.Pheromone_A;
-import VisitorClasses.Pheromones.Pheromone_B;
-import VisitorClasses.Pheromones.Pheromone_C;
-import com.github.rinde.rinsim.core.model.road.RoadModels;
-import com.github.rinde.rinsim.geom.GeomHeuristics;
+import VisitorClasses.Pheromones.Pheromone_Node_Booking;
+import VisitorClasses.Pheromones.Pheromone_Boxes_Info;
 import com.github.rinde.rinsim.geom.Point;
-import edu.uci.ics.jung.graph.event.GraphEvent;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphBuilder;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
-import es.usc.citius.hipster.graph.HipsterGraph;
 import es.usc.citius.hipster.graph.HipsterMutableGraph;
 import es.usc.citius.hipster.model.problem.SearchProblem;
 
-import javax.measure.Measure;
-import javax.measure.quantity.Velocity;
-import javax.measure.unit.SI;
 import java.util.*;
 
-import static DelgMas.AgvAgent.SPEED;
-
-public class Ant_D extends Ant {
+public class Ant_Path_Finder extends Ant {
     DMASModel dmas;
     Point desti;
     Point origi;
     HipsterMutableGraph graph = (HipsterMutableGraph) GraphBuilder.<Point, Double>create().createUndirectedGraph();
 
-    public Ant_D(AgvModel agvModel, DMASModel dmasModel, Point origi, Point desti) {
+    public Ant_Path_Finder(AgvModel agvModel, DMASModel dmasModel, Point origi, Point desti) {
         super(agvModel);
         this.dmas = dmasModel;
         this.origi = origi;
@@ -42,12 +33,12 @@ public class Ant_D extends Ant {
     }
 
     @Override
-    public int dropPheromone(Pheromone_B pheromone) {
+    public int dropPheromone(Pheromone_Node_Booking pheromone) {
         return 0;
     }
 
     @Override
-    public void dropPheromone(Pheromone_C pheromone) {
+    public void dropPheromone(Pheromone_Boxes_Info pheromone) {
 
     }
 

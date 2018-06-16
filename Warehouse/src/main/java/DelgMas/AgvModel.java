@@ -29,12 +29,15 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
     private RoadModel roadModel;
     public TaskListener taskListener;
 
+    public int delivered_boxes;
+
     protected AgvModel(PDPModel deleg) {
         super(deleg);
         depot_locations = new ArrayList<>();
         for (int i = 0; i < AgvExample.NUM_DEPOTS; ++i)
             depot_locations.add(new Point(76, i * 12));
         createUi(this);
+        delivered_boxes = 0;
     }
 
     static Builder builder() {
@@ -46,6 +49,8 @@ public class AgvModel extends ForwardingPDPModel implements SimulatorUser, RoadU
         this.deliver(agv, box, timeLapse);
         this.unregister(box);
         if (box.finaldestination) {
+            // count the delivered boxes to depot
+            this.delivered_boxes++;
             return;
         } else {
             long currentTime = timeLapse.getTime();

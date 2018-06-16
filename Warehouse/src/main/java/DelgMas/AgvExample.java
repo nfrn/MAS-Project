@@ -12,6 +12,8 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.geom.*;
+import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
+import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioController;
@@ -39,6 +41,7 @@ public final class AgvExample {
     public static final int NUM_DEPOTS = 5;
     public static final int MAX_CAPACITY = 1;
     public static final double PROB_BOX = 1;
+    public static final int TEST_MINUTE_TIME = 60*10;
     //Positions
     public static List<Point> box_positions;
     public static List<Point> storage_positions;
@@ -60,7 +63,7 @@ public final class AgvExample {
 
         Builder viewBuilder = View.builder().with(
                 WarehouseRenderer.builder().withNodes().withMargin(2.0D))
-                .with(AGVRenderer.builder().withVehicleCoordinates().withDifferentColorsForVehicles())
+                .with(AGVRenderer.builder().withDifferentColorsForVehicles())
                 .with(AgvRenderer.builder())
                 .with(BoxRender.builder())
                 .with(RoadUserRenderer.builder()
@@ -72,7 +75,8 @@ public final class AgvExample {
                                 BatteryCharger.class, "/graphics/flat/warehouse-32.png"))
                 .withTitleAppendix("AGV example")
                 //.with(StatsPanel.builder())
-                .withResolution(1300, 1000);
+                .withResolution(1300, 1000)
+                .withSpeedUp(100);
 
         final Simulator sim = Simulator.builder()
                 .setTickLength(TICK_LENGTH)
@@ -84,7 +88,7 @@ public final class AgvExample {
                 .addModel(ScenarioController.builder(Scenario.builder()
                         .build()))
                 .addModel(StatsTracker.builder())
-                .addModel(viewBuilder)
+                //.addModel(viewBuilder)
                 .build();
         final RandomGenerator rng = sim.getRandomGenerator();
 
@@ -93,6 +97,8 @@ public final class AgvExample {
                 RoadModel.class);
         final AgvModel agvModel = sim.getModelProvider().getModel(
                 AgvModel.class);
+
+        final  StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
 
         // Initial positions
         depot_positions = new ArrayList<>();
@@ -148,7 +154,6 @@ public final class AgvExample {
             @Override
             public void tick(TimeLapse time) {
 
-
                 TimeModel tm = sim.getModelProvider().getModel(TimeModel.class);
                 long currentTime = tm.getCurrentTime();
 
@@ -163,6 +168,11 @@ public final class AgvExample {
                         }
                     }
 
+                }
+
+                if (sim.getCurrentTime() > 60*60*1000) { //TEST_MINUTE_TIME
+                    print_stats(agvModel, statsTracker.getStatistics());
+                    sim.stop();
                 }
 
             }
@@ -192,7 +202,18 @@ public final class AgvExample {
         });
 
 
+
+        long startTime = System.nanoTime();
         sim.start();
+        long endTime = System.nanoTime();
+
+        long duration = (endTime - startTime);
+        System.out.println("time spent on test " + duration);
+    }
+
+    public static void print_stats(AgvModel agvModel, StatisticsDTO stats) {
+        System.out.println("TOTAL DELIVERED BOXES: " + agvModel.delivered_boxes);
+        System.out.println(stats.toString());
     }
 
 

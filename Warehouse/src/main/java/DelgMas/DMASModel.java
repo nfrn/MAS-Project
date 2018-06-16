@@ -3,12 +3,12 @@ package DelgMas;
 import Ui.RoadDataPanel;
 import Ui.StringListener;
 import VisitorClasses.Ants.Ant_A;
-import VisitorClasses.Ants.Ant_B;
-import VisitorClasses.Ants.Ant_C;
-import VisitorClasses.Ants.Ant_D;
-import VisitorClasses.Pheromones.PheromoneConnectionBooking;
+import VisitorClasses.Ants.Ant_Intention;
+import VisitorClasses.Ants.Ant_Booking;
+import VisitorClasses.Ants.Ant_Path_Finder;
+import VisitorClasses.Pheromones.Pheromone_Connection_Booking;
 import VisitorClasses.Ants.*;
-import VisitorClasses.Pheromones.Pheromone_B;
+import VisitorClasses.Pheromones.Pheromone_Node_Booking;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
@@ -75,8 +75,8 @@ public class DMASModel implements TickListener, Model<Point> {
             // check if the node is booked
             if (pheroStore != null) {
 
-                for(Iterator<Pheromone_B> iter = pheroStore.list_phero_B.iterator(); iter.hasNext(); ) {
-                    Pheromone_B phero = iter.next();
+                for(Iterator<Pheromone_Node_Booking> iter = pheroStore.list_phero_B.iterator(); iter.hasNext(); ) {
+                    Pheromone_Node_Booking phero = iter.next();
                     if(phero.getAgentID() == agent.ID)
                         iter.remove();
                 }
@@ -92,8 +92,8 @@ public class DMASModel implements TickListener, Model<Point> {
                 Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
                 PheromoneConnectionStorage pcs = connections.get(c);
 
-                for(Iterator<PheromoneConnectionBooking> iter = pcs.list_phero_Connection_Booking.iterator(); iter.hasNext(); ) {
-                    PheromoneConnectionBooking phero = iter.next();
+                for(Iterator<Pheromone_Connection_Booking> iter = pcs.list_phero_Connection_Booking.iterator(); iter.hasNext(); ) {
+                    Pheromone_Connection_Booking phero = iter.next();
                     if(phero.getAgentID() == agent.ID)
                         iter.remove();
                 }
@@ -112,7 +112,7 @@ public class DMASModel implements TickListener, Model<Point> {
             PheromoneStorage pheroStore = nodes.get(pt);
             // check if the node is booked
             if (pheroStore != null) {
-                Ant_B antB = new Ant_B(am, tws.get(i), agentID);
+                Ant_Intention antB = new Ant_Intention(am, tws.get(i), agentID);
                 int result = pheroStore.accept(antB);
                 if (result == -1) {
                     return j;
@@ -134,7 +134,7 @@ public class DMASModel implements TickListener, Model<Point> {
 
                 Connection c = this.graphRoadModel.getGraph().getConnection(to, from);
                 PheromoneConnectionStorage pcs = connections.get(c);
-                Ant_B antB = new Ant_B(am, tw, agentID);
+                Ant_Intention antB = new Ant_Intention(am, tw, agentID);
                 if (pcs.accept(antB) == -1)
                     return j;
 
@@ -148,7 +148,7 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public void releaseAnts_BookingOnConnection(Connection c, TimeWindow tw, AgvAgent agent) {
         PheromoneConnectionStorage pcs = connections.get(c);
-        Ant_C antC = new Ant_C(am, tw, agent.ID);
+        Ant_Booking antC = new Ant_Booking(am, tw, agent.ID);
         pcs.accept(antC);
     }
 
@@ -178,14 +178,14 @@ public class DMASModel implements TickListener, Model<Point> {
 
                 Connection c = this.graphRoadModel.getGraph().getConnection(from, to);
                 PheromoneConnectionStorage pcs = connections.get(c);
-                Ant_C antC = new Ant_C(am, tw, agentID);
+                Ant_Booking antC = new Ant_Booking(am, tw, agentID);
                 pcs.accept(antC);
 
                 antC = null;
             }
 
             if (pheroStore != null) {
-                Ant_C antC = new Ant_C(am, tws.get(i), agentID);
+                Ant_Booking antC = new Ant_Booking(am, tws.get(i), agentID);
                 pheroStore.accept(antC);
 
                 antC = null;
@@ -196,7 +196,7 @@ public class DMASModel implements TickListener, Model<Point> {
 
     public Queue<Point> releaseAnts_D(Point orig, Point desti, int delay) {
 
-        Ant_D antD = new Ant_D(am, this, orig, desti);
+        Ant_Path_Finder antD = new Ant_Path_Finder(am, this, orig, desti);
         return antD.getPath(delay);
 
     }

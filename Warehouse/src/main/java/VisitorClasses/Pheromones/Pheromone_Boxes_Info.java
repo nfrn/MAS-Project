@@ -7,10 +7,10 @@ import com.github.rinde.rinsim.util.TimeWindow;
 
 import java.util.ArrayList;
 
-public class Pheromone_C extends Pheromone {
+public class Pheromone_Boxes_Info extends Pheromone {
     public ArrayList<Parcel> boxes_info;
 
-    public Pheromone_C(int lifetime, Point point){
+    public Pheromone_Boxes_Info(int lifetime, Point point){
 
         super(lifetime,point);
         this.boxes_info = new ArrayList<Parcel>();

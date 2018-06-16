@@ -8,12 +8,12 @@ import java.sql.Time;
 import java.util.ArrayList;
 
 // the booking pheromone, contains data about node booking
-public class Pheromone_B extends Pheromone {
+public class Pheromone_Node_Booking extends Pheromone {
     public TimeWindow node_booking;
     // agv Agent that made the booking
     private int agentID;
 
-    public Pheromone_B(int lifetime, Point point, TimeWindow tm, int agentID){
+    public Pheromone_Node_Booking(int lifetime, Point point, TimeWindow tm, int agentID){
         super(lifetime,point);
         this.node_booking = tm;
         this.agentID = agentID;
